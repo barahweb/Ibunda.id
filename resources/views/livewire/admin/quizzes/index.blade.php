@@ -163,6 +163,9 @@ new #[Layout('components.layouts.app')] class extends Component {
                         <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400">{{ $quiz->creator->name }}</td>
                         <td class="px-4 py-3">
                             <div class="flex justify-end gap-1">
+                                <flux:button size="sm" variant="ghost" :href="route('admin.quizzes.questions', $quiz)" wire:navigate>
+                                    Soal
+                                </flux:button>
                                 <flux:button size="sm" variant="ghost" wire:click="togglePublish('{{ $quiz->id }}')">
                                     {{ $quiz->isPublished() ? 'Jadikan Draft' : 'Publish' }}
                                 </flux:button>

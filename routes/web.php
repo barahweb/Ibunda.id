@@ -21,6 +21,7 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Volt::route('quizzes', 'admin.quizzes.index')->name('quizzes.index');
+    Volt::route('quizzes/{quiz}/questions', 'admin.quizzes.questions')->name('quizzes.questions');
 });
 
 require __DIR__.'/auth.php';
