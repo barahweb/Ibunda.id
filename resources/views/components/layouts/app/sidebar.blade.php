@@ -15,7 +15,9 @@
                 <flux:navlist.group heading="Platform" class="grid">
                     <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>Dashboard</flux:navlist.item>
 
-                    <flux:navlist.item icon="clipboard-document-list" :href="route('quizzes.index')" :current="request()->routeIs('quizzes.*')" wire:navigate>Kerjakan Quiz</flux:navlist.item>
+                    <flux:navlist.item icon="clipboard-document-list" :href="route('quizzes.index')" :current="request()->routeIs('quizzes.index') || request()->routeIs('quizzes.attempt')" wire:navigate>Kerjakan Quiz</flux:navlist.item>
+
+                    <flux:navlist.item icon="clock" :href="route('quizzes.history')" :current="request()->routeIs('quizzes.history') || request()->routeIs('quizzes.attempts.result')" wire:navigate>Riwayat Saya</flux:navlist.item>
 
                     @if (auth()->user()->isAdmin())
                         <flux:navlist.item icon="clipboard-document-check" :href="route('admin.quizzes.index')" :current="request()->routeIs('admin.quizzes.*')" wire:navigate>Quiz Management</flux:navlist.item>

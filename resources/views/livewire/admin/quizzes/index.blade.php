@@ -171,6 +171,9 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 <flux:button size="sm" variant="ghost" :href="route('admin.quizzes.questions', $quiz)" wire:navigate>
                                     Soal
                                 </flux:button>
+                                <flux:button size="sm" variant="ghost" :href="route('admin.quizzes.submissions', $quiz)" wire:navigate>
+                                    Hasil
+                                </flux:button>
                                 <flux:button size="sm" variant="ghost" wire:click="togglePublish('{{ $quiz->id }}')">
                                     {{ $quiz->isPublished() ? 'Jadikan Draft' : 'Publish' }}
                                 </flux:button>

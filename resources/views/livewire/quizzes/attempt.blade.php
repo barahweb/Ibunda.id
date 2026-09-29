@@ -72,7 +72,8 @@ new #[Layout('components.layouts.app')] class extends Component {
                     {{ $attempt->hasPassed() ? 'Lulus' : 'Belum Lulus' }}
                 </flux:badge>
             @endif
-            <div class="mt-4">
+            <div class="mt-4 flex justify-center gap-2">
+                <flux:button variant="primary" :href="route('quizzes.attempts.result', $attempt)" wire:navigate>Lihat Detail Hasil</flux:button>
                 <flux:button :href="route('quizzes.index')" wire:navigate>Kembali ke Daftar Quiz</flux:button>
             </div>
         </div>
