@@ -46,6 +46,13 @@ class QuestionService
 
     public function delete(Question $question): void
     {
+        if ($question->quiz->isPublished() && $question->quiz->questions()->count() === 1) {
+            throw new \DomainException('Ini satu-satunya soal di quiz yang sudah published. Unpublish dulu quiz-nya kalau mau menghapus soal ini.');
+        }
+
+        // Question & QuestionOption pakai SoftDeletes, jadi ini nggak beneran menghapus baris-nya
+        // dari database — quiz_answers lama yang masih nunjuk ke soal/opsi ini tetap valid
+        // (lihat QuestionManagementTest: "deleting a question preserves the historical answer").
         $question->delete();
     }
 

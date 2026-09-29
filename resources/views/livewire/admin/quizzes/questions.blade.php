@@ -3,6 +3,7 @@
 use App\Models\Question;
 use App\Models\Quiz;
 use App\Services\QuestionService;
+use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -116,7 +117,15 @@ new #[Layout('components.layouts.app')] class extends Component {
         $this->authorize('update', $this->quiz);
 
         $question = $this->quiz->questions()->findOrFail($questionId);
-        $questionService->delete($question);
+
+        try {
+            $questionService->delete($question);
+        } catch (\DomainException $e) {
+            Flux::toast(text: $e->getMessage(), variant: 'danger');
+
+            return;
+        }
+
         unset($this->questions);
     }
 

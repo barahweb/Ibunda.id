@@ -15,6 +15,8 @@
                 <flux:navlist.group heading="Platform" class="grid">
                     <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>Dashboard</flux:navlist.item>
 
+                    <flux:navlist.item icon="clipboard-document-list" :href="route('quizzes.index')" :current="request()->routeIs('quizzes.*')" wire:navigate>Kerjakan Quiz</flux:navlist.item>
+
                     @if (auth()->user()->isAdmin())
                         <flux:navlist.item icon="clipboard-document-check" :href="route('admin.quizzes.index')" :current="request()->routeIs('admin.quizzes.*')" wire:navigate>Quiz Management</flux:navlist.item>
                     @endif
@@ -130,6 +132,10 @@
         </flux:header>
 
         {{ $slot }}
+
+        @persist('toast')
+            <flux:toast />
+        @endpersist
 
         @fluxScripts
     </body>

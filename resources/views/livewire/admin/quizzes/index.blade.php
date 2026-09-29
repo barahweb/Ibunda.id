@@ -2,6 +2,7 @@
 
 use App\Models\Quiz;
 use App\Services\QuizService;
+use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -95,7 +96,11 @@ new #[Layout('components.layouts.app')] class extends Component {
 
         $this->authorize('update', $quiz);
 
-        $quizService->togglePublish($quiz);
+        try {
+            $quizService->togglePublish($quiz);
+        } catch (\DomainException $e) {
+            Flux::toast(text: $e->getMessage(), variant: 'danger');
+        }
     }
 
     public function deleteQuiz(string $quizId, QuizService $quizService): void

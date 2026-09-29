@@ -37,6 +37,10 @@ class QuizService
 
     public function togglePublish(Quiz $quiz): Quiz
     {
+        if (!$quiz->isPublished() && $quiz->questions()->doesntExist()) {
+            throw new \DomainException('Quiz belum punya soal, tidak bisa dipublish.');
+        }
+
         $quiz->update([
             'status' => $quiz->isPublished() ? Quiz::STATUS_DRAFT : Quiz::STATUS_PUBLISHED,
         ]);

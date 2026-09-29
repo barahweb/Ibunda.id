@@ -17,6 +17,9 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
     Volt::route('settings/password', 'settings.password')->name('settings.password');
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
+
+    Volt::route('quizzes', 'quizzes.index')->name('quizzes.index');
+    Volt::route('quizzes/{quiz}/attempt', 'quizzes.attempt')->name('quizzes.attempt');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {

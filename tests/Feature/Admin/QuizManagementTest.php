@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Question;
 use App\Models\Quiz;
 use App\Models\User;
 use Livewire\Volt\Volt;
@@ -78,6 +79,7 @@ test('admin can toggle publish status', function () {
     $admin = User::factory()->admin()->create();
     $this->actingAs($admin);
     $quiz = Quiz::factory()->for($admin, 'creator')->draft()->create();
+    Question::factory()->for($quiz)->create();
 
     Volt::test('admin.quizzes.index')->call('togglePublish', $quiz->id);
     expect($quiz->refresh()->status)->toBe(Quiz::STATUS_PUBLISHED);
@@ -94,6 +96,31 @@ test('admin can delete a quiz', function () {
     Volt::test('admin.quizzes.index')->call('deleteQuiz', $quiz->id);
 
     expect(Quiz::find($quiz->id))->toBeNull();
+});
+
+test('a quiz without questions cannot be published', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+    $quiz = Quiz::factory()->for($admin, 'creator')->draft()->create();
+
+    Volt::test('admin.quizzes.index')
+        ->call('togglePublish', $quiz->id)
+        ->assertDispatched('toast-show');
+
+    expect($quiz->refresh()->status)->toBe(Quiz::STATUS_DRAFT);
+});
+
+test('a quiz with at least one question can be published', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+    $quiz = Quiz::factory()->for($admin, 'creator')->draft()->create();
+    Question::factory()->for($quiz)->create();
+
+    Volt::test('admin.quizzes.index')
+        ->call('togglePublish', $quiz->id)
+        ->assertHasNoErrors();
+
+    expect($quiz->refresh()->status)->toBe(Quiz::STATUS_PUBLISHED);
 });
 
 test('search filters quizzes by title', function () {
