@@ -14,6 +14,10 @@
             <flux:navlist variant="outline">
                 <flux:navlist.group heading="Platform" class="grid">
                     <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>Dashboard</flux:navlist.item>
+
+                    @if (auth()->user()->isAdmin())
+                        <flux:navlist.item icon="clipboard-document-check" :href="route('admin.quizzes.index')" :current="request()->routeIs('admin.quizzes.*')" wire:navigate>Quiz Management</flux:navlist.item>
+                    @endif
                 </flux:navlist.group>
             </flux:navlist>
 
