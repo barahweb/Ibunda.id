@@ -51,7 +51,7 @@ class QuestionService
         }
 
         // Question & QuestionOption pakai SoftDeletes, jadi ini nggak beneran menghapus baris-nya
-        // dari database — quiz_answers lama yang masih nunjuk ke soal/opsi ini tetap valid
+        // dari database, quiz_answers lama yang masih nunjuk ke soal/opsi ini tetap valid
         // (lihat QuestionManagementTest: "deleting a question preserves the historical answer").
         $question->delete();
     }

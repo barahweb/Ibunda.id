@@ -5,6 +5,7 @@ use App\Models\QuestionOption;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\User;
+use App\Services\QuizAttemptService;
 use Livewire\Volt\Volt;
 
 /**
@@ -194,4 +195,51 @@ test('a completed attempt cannot be resubmitted', function () {
     $component->call('submit');
 
     expect($attempt->refresh()->answers)->toHaveCount(1);
+});
+
+test('the scoring service itself is idempotent even without the component guard', function () {
+    // Simulasi race condition: dua request submit "bersamaan" bisa lolos guard
+    // isCompleted() di komponen (TOCTOU), jadi service-nya sendiri wajib aman.
+    $participant = User::factory()->create();
+    $quiz = createPublishedQuizWithQuestions(2);
+    $questions = $quiz->questions()->with('options')->get();
+
+    $attempt = QuizAttempt::factory()->for($quiz)->for($participant)->create([
+        'status' => QuizAttempt::STATUS_IN_PROGRESS,
+    ]);
+
+    $answers = $questions->mapWithKeys(
+        fn ($question) => [$question->id => $question->options->firstWhere('is_correct', true)->id]
+    )->all();
+
+    $service = app(QuizAttemptService::class);
+    $service->submit($attempt, $answers);
+    $service->submit($attempt, $answers);
+
+    $attempt->refresh();
+    expect($attempt->answers)->toHaveCount(2);
+    expect($attempt->score)->toBe(100);
+});
+
+test('rapid repeated submit calls are rate limited', function () {
+    $participant = User::factory()->create();
+    $quiz = createPublishedQuizWithQuestions(1);
+    $this->actingAs($participant);
+
+    $question = $quiz->questions()->with('options')->first();
+    $correctOption = $question->options->firstWhere('is_correct', true);
+
+    $component = Volt::test('quizzes.attempt', ['quiz' => $quiz]);
+
+    // Habiskan jatah rate limit pakai submit kosong (tetap dihitung sebagai percobaan).
+    for ($i = 0; $i < 5; $i++) {
+        $component->call('submit');
+    }
+
+    // Submit valid berikutnya tetap diblokir karena limitnya udah kepakai.
+    $component
+        ->set("answers.{$question->id}", $correctOption->id)
+        ->call('submit');
+
+    expect(QuizAttempt::where('quiz_id', $quiz->id)->first()->status)->toBe(QuizAttempt::STATUS_IN_PROGRESS);
 });

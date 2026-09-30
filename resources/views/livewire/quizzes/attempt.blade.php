@@ -5,6 +5,7 @@ use App\Models\QuizAttempt;
 use App\Services\QuizAttemptService;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
@@ -39,6 +40,14 @@ new #[Layout('components.layouts.app')] class extends Component {
             return;
         }
 
+        if (RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+            Flux::toast(text: 'Terlalu banyak percobaan submit, coba lagi sebentar lagi.', variant: 'danger');
+
+            return;
+        }
+
+        RateLimiter::hit($this->throttleKey(), 60);
+
         foreach ($this->questions as $question) {
             if (empty($this->answers[$question->id])) {
                 Flux::toast(text: 'Semua soal harus dijawab sebelum submit.', variant: 'danger');
@@ -48,6 +57,11 @@ new #[Layout('components.layouts.app')] class extends Component {
         }
 
         $this->attempt = $quizAttemptService->submit($this->attempt, $this->answers);
+    }
+
+    protected function throttleKey(): string
+    {
+        return 'quiz-attempt-submit:'.$this->attempt->id;
     }
 }; ?>
 

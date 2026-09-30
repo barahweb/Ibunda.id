@@ -34,23 +34,32 @@ class QuizAttemptService
     public function submit(QuizAttempt $attempt, array $answers): QuizAttempt
     {
         return DB::transaction(function () use ($attempt, $answers) {
+            // Kunci baris attempt dan cek ulang status di dalam transaksi, jaga-jaga
+            // terhadap dua request submit yang nyaris bersamaan (double click, replay),
+            // biar cuma salah satu yang benar-benar menskor & bikin baris jawaban.
+            $locked = QuizAttempt::whereKey($attempt->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->isCompleted()) {
+                return $locked;
+            }
+
             $totalPoints = 0;
             $earnedPoints = 0;
 
-            foreach ($attempt->quiz->questions()->with('options')->get() as $question) {
+            foreach ($locked->quiz->questions()->with('options')->get() as $question) {
                 $selectedOptionId = $answers[$question->id] ?? null;
 
-                // Opsi yang dipilih wajib benar-benar milik soal ini — kalau nggak, anggap
+                // Opsi yang dipilih wajib benar-benar milik soal ini, kalau nggak, anggap
                 // belum dijawab. Ini jaga-jaga terhadap payload yang dipalsukan (option_id
                 // dari soal lain), UI normal nggak akan pernah kirim kombinasi kayak gini.
-                if ($selectedOptionId !== null && ! $question->options->contains('id', $selectedOptionId)) {
+                if ($selectedOptionId !== null && !$question->options->contains('id', $selectedOptionId)) {
                     $selectedOptionId = null;
                 }
 
                 $isCorrect = $selectedOptionId !== null
                     && $question->correctOption?->id === $selectedOptionId;
 
-                $attempt->answers()->create([
+                $locked->answers()->create([
                     'question_id' => $question->id,
                     'selected_option_id' => $selectedOptionId,
                     'is_correct' => $isCorrect,
@@ -63,13 +72,13 @@ class QuizAttemptService
 
             $score = $totalPoints > 0 ? (int) round(($earnedPoints / $totalPoints) * 100) : 0;
 
-            $attempt->update([
+            $locked->update([
                 'submitted_at' => now(),
                 'score' => $score,
                 'status' => QuizAttempt::STATUS_COMPLETED,
             ]);
 
-            return $attempt;
+            return $locked;
         });
     }
 }
