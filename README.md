@@ -1,0 +1,128 @@
+# Quiz & Assessment Management System
+
+Aplikasi CMS buat bikin, kelola, dan ngerjain quiz/assessment — dibangun pakai Laravel 12,
+Livewire (Volt), dan Flux UI. Ada dua peran: **Admin** yang bikin & kelola quiz, dan
+**Peserta** yang ngerjain quiz-nya.
+
+## Fitur
+
+**Wajib:**
+- Quiz Management — admin bikin, edit, hapus, dan publish/unpublish quiz.
+- Question Management — admin kelola soal pilihan ganda per quiz (opsi jawaban, tandai
+  yang benar, urutan soal).
+- Quiz Submission — peserta ngerjain quiz published, jawaban otomatis diskor.
+- Result Display — peserta lihat hasil & riwayat sendiri, admin lihat semua submission
+  per quiz.
+- Responsive UI — semua halaman jalan di layar mobile sampai desktop.
+
+**Bonus yang udah dikerjain:**
+- Auth lengkap (login, daftar, lupa password, verifikasi email).
+- Role & Permission (`admin` / `participant`) pakai Laravel Policy.
+- Service layer (`app/Services/*`) buat pisahin logic bisnis dari komponen Livewire.
+- Testing pakai Pest (lihat `tests/`).
+- Dashboard analitik buat admin (grafik tren submission, quiz terpopuler, tingkat
+  kelulusan).
+- Security hardening: rate limiting di submit quiz & daftar akun, proteksi race
+  condition pas submit, captcha (Cloudflare Turnstile) di halaman daftar.
+
+## Tech Stack
+
+- **Backend:** Laravel 12, PHP 8.4
+- **Frontend:** Livewire 3 (Volt class-based component), Flux UI, Tailwind CSS v4
+- **Testing:** Pest v3
+- **Database:** SQLite (default), gampang diganti ke MySQL/PostgreSQL
+
+## Instalasi
+
+1. Clone repo ini, lalu masuk ke folder-nya.
+2. Install dependency PHP & JS:
+   ```bash
+   composer install
+   npm install
+   ```
+3. Siapkan file environment:
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+4. Siapkan database (default SQLite):
+   ```bash
+   touch database/database.sqlite
+   ```
+   Atau ganti `DB_CONNECTION`, dll di `.env` kalau mau pakai MySQL/PostgreSQL.
+5. Jalankan migration + seeder (seeder bikin akun contoh & beberapa quiz):
+   ```bash
+   php artisan migrate --seed
+   ```
+6. Build asset frontend:
+   ```bash
+   npm run build
+   ```
+7. Jalankan aplikasinya:
+   ```bash
+   composer run dev
+   ```
+   Perintah ini jalanin server Laravel, queue listener, log viewer, dan Vite bareng-bareng.
+   Kalau pakai [Laravel Herd](https://herd.laravel.com/), aplikasi otomatis bisa diakses
+   dari `https://<nama-folder-project>.test` tanpa perlu jalanin `composer run dev`.
+
+### Akun contoh (hasil seeder)
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | `admin@example.com` | `password` |
+| Peserta | `test@example.com` | `password` |
+
+### Captcha di halaman daftar (opsional)
+
+Halaman daftar akun pakai [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/)
+buat cegah bot. Butuh 2 env var:
+
+```
+TURNSTILE_SITE_KEY=...
+TURNSTILE_SECRET_KEY=...
+```
+
+Buat testing lokal tanpa bikin akun Cloudflare, pakai
+[test key resmi Cloudflare](https://developers.cloudflare.com/turnstile/troubleshooting/testing/)
+yang selalu lolos verifikasi:
+
+```
+TURNSTILE_SITE_KEY=1x00000000000000000000AA
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+```
+
+## Menjalankan Test
+
+```bash
+php artisan test
+```
+
+Rapiin format kode (Pint) sebelum commit:
+
+```bash
+vendor/bin/pint --dirty
+```
+
+## Struktur & Arsitektur
+
+Pola yang dipakai di tiap fitur: **Volt component (tipis) → validasi →
+Service class (`app/Services/*`) → Model.** Komponen Livewire cuma nanganin
+input/otorisasi, logic bisnis (scoring, publish/unpublish, dll) ada di service class.
+
+Bagian penting:
+- `app/Models/` — `Quiz`, `Question`, `QuestionOption`, `QuizAttempt`, `QuizAnswer`, `User`
+  (kolom `role` buat bedain admin/peserta).
+- `app/Policies/` — `QuizPolicy`, `QuizAttemptPolicy`, dicek di tiap Volt component
+  (`mount()` + tiap action) dan di route middleware (`admin/*` digerbang middleware `admin`).
+- `app/Services/` — `QuizService`, `QuestionService`, `QuizAttemptService` (termasuk
+  logic scoring & proteksi race condition pas submit).
+- `resources/views/livewire/` — komponen Volt, dikelompokkan per domain
+  (`admin/quizzes/*`, `quizzes/*`, `auth/*`, `settings/*`).
+- `resources/views/livewire/dashboard.blade.php` — dashboard beda tampilan buat admin
+  (statistik & grafik) vs peserta (progress pribadi).
+
+## Catatan
+
+Dokumen ini nyatet setup & arsitektur secara ringkas. Detail keputusan desain & histori
+pengerjaan tiap modul ada di riwayat commit.
