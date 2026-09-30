@@ -31,6 +31,8 @@ Livewire (Volt), dan Flux UI. Ada dua peran: **Admin** yang bikin & kelola quiz,
   gak perlu lagi lewat seeder/tinker manual.
 - Security hardening: rate limiting di submit quiz & daftar akun, proteksi race
   condition pas submit, captcha (Cloudflare Turnstile) di halaman daftar.
+- Docker support — `Dockerfile` + `docker-compose.yml`, lihat bagian
+  [Docker](#docker) di bawah.
 
 ## Tech Stack
 
@@ -114,6 +116,43 @@ yang selalu lolos verifikasi:
 TURNSTILE_SITE_KEY=1x00000000000000000000AA
 TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
 ```
+
+## Docker
+
+Alternatif dari instalasi manual di atas. Satu image dipakai buat 3 peran (`app` yang
+serve web, `scheduler`, `queue`), plus container `mysql` terpisah.
+
+1. Salin file environment khusus Docker, lalu isi `APP_KEY`:
+   ```bash
+   cp docker/env.example .env.docker
+   ```
+2. Build image-nya dulu, baru generate `APP_KEY` (butuh image-nya buat jalanin artisan):
+   ```bash
+   docker compose build
+   docker compose run --rm app php artisan key:generate --show
+   ```
+   Tempel hasilnya ke `APP_KEY=` di `.env.docker`.
+3. Nyalakan semuanya:
+   ```bash
+   docker compose up -d
+   ```
+   Migration jalan otomatis pas container `app` start (lihat `docker/entrypoint.sh`).
+   Buat seed data contoh, jalanin manual sekali:
+   ```bash
+   docker compose exec app php artisan db:seed
+   ```
+4. Buka `http://localhost:8080` (atau ganti `APP_PORT` di `.env.docker` kalau port
+   8080 udah kepake).
+
+Catatan:
+- `.env.docker` **terpisah** dari `.env` biasa (buat development lokal/Herd) — isinya
+  beda soalnya `DB_HOST` di Docker itu `mysql` (nama service), bukan `127.0.0.1`.
+- Setup ini nggabungin nginx + PHP-FPM dalam 1 container lewat `supervisord`, sengaja
+  disederhanain (bukan setup production yang di-hardening penuh) biar gampang dicoba.
+- **Saya belum bisa nyoba `docker compose up` beneran** di environment kerja saya (gak
+  ada Docker terinstall di situ) — udah saya cek manual tiap file-nya (Dockerfile,
+  nginx.conf, entrypoint.sh) sebaik mungkin, tapi tolong dicoba sendiri dan kasih tau
+  kalau ada yang error.
 
 ## Menjalankan Test
 
