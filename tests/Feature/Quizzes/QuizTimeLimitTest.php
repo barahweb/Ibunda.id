@@ -161,3 +161,18 @@ test('history does not show a countdown for a completed attempt', function () {
         ->assertDontSee('remaining:')
         ->assertDontSee('Tanpa batas waktu');
 });
+
+test('auto submit tolerates a few seconds of clock drift before the real deadline', function () {
+    $participant = User::factory()->create();
+    $quiz = createTimedQuiz(10);
+    $this->actingAs($participant);
+
+    $component = Volt::test('quizzes.attempt', ['quiz' => $quiz]);
+
+    // 3 detik tersisa dari deadline asli, masih di dalam toleransi grace period 5 detik.
+    $this->travel(597)->seconds();
+
+    $component->call('autoSubmit')->assertHasNoErrors();
+
+    expect(QuizAttempt::where('quiz_id', $quiz->id)->first()->status)->toBe(QuizAttempt::STATUS_COMPLETED);
+});

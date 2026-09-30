@@ -82,3 +82,19 @@ test('the command is scheduled to run every minute', function () {
     expect($event->expression)->toBe('* * * * *');
     expect($event->withoutOverlapping)->toBeTrue();
 });
+
+test('every expired attempt is closed even across multiple chunk pages', function () {
+    $quiz = createQuizForScheduler(10);
+
+    QuizAttempt::factory()
+        ->for($quiz)
+        ->count(105)
+        ->create(['started_at' => now()->subMinutes(11)]);
+
+    $this->artisan('quiz:close-expired-attempts')
+        ->expectsOutput('105 attempt kadaluarsa ditutup.')
+        ->assertSuccessful();
+
+    expect(QuizAttempt::where('status', QuizAttempt::STATUS_IN_PROGRESS)->count())->toBe(0);
+    expect(QuizAttempt::where('status', QuizAttempt::STATUS_COMPLETED)->count())->toBe(105);
+});

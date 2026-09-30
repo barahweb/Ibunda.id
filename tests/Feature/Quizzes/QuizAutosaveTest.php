@@ -189,3 +189,19 @@ test('history does not show answered progress for a completed attempt', function
         ->assertOk()
         ->assertDontSee('soal terjawab');
 });
+
+test('submitting with an empty string for a question does not discard its saved answer', function () {
+    $quiz = createAutosaveQuiz(1);
+    $question = $quiz->questions()->with('options')->first();
+    $correctOption = $question->options->firstWhere('is_correct', true);
+    $attempt = QuizAttempt::factory()->for($quiz)->create();
+    $service = app(QuizAttemptService::class);
+
+    $service->saveAnswer($attempt, $question->id, $correctOption->id);
+    $service->submit($attempt, [$question->id => '']);
+
+    $attempt->refresh();
+
+    expect($attempt->score)->toBe(100);
+    expect($attempt->answers()->first()->selected_option_id)->toBe($correctOption->id);
+});
