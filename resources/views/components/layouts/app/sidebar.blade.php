@@ -27,6 +27,12 @@
                         <flux:navlist.item icon="users" :href="route('admin.users.index')" :current="request()->routeIs('admin.users.*')" wire:navigate>Kelola User</flux:navlist.item>
                     @endif
                 </flux:navlist.group>
+
+                @if (auth()->user()->isAdmin())
+                    <flux:navlist.group heading="Tes Kepribadian" class="grid">
+                        <flux:navlist.item icon="face-smile" :href="route('admin.assessments.index')" :current="request()->routeIs('admin.assessments.*')" wire:navigate>Kelola Tes Kepribadian</flux:navlist.item>
+                    </flux:navlist.group>
+                @endif
             </flux:navlist>
 
             <flux:spacer />
