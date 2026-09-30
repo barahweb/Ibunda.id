@@ -21,6 +21,8 @@
 
                     @if (auth()->user()->isAdmin())
                         <flux:navlist.item icon="clipboard-document-check" :href="route('admin.quizzes.index')" :current="request()->routeIs('admin.quizzes.*')" wire:navigate>Quiz Management</flux:navlist.item>
+
+                        <flux:navlist.item icon="chart-bar-square" :href="route('admin.reports.index')" :current="request()->routeIs('admin.reports.*')" wire:navigate>Laporan</flux:navlist.item>
                     @endif
                 </flux:navlist.group>
             </flux:navlist>

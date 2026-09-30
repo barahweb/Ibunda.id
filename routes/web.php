@@ -36,6 +36,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Volt::route('quizzes', 'admin.quizzes.index')->name('quizzes.index');
     Volt::route('quizzes/{quiz}/questions', 'admin.quizzes.questions')->name('quizzes.questions');
     Volt::route('quizzes/{quiz}/submissions', 'admin.quizzes.submissions')->name('quizzes.submissions');
+
+    Volt::route('reports', 'admin.reports.index')->name('reports.index');
 });
 
 require __DIR__.'/auth.php';

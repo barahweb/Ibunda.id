@@ -36,7 +36,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
 <div class="flex flex-col gap-6">
     <div>
-        <flux:link :href="route('quizzes.history')" wire:navigate class="text-sm">&larr; Kembali ke Riwayat</flux:link>
+        <flux:link href="#" onclick="window.history.back(); return false;" class="text-sm">&larr; Kembali</flux:link>
     </div>
 
     <div class="rounded-2xl border border-zinc-200 p-10 text-center dark:border-zinc-700">

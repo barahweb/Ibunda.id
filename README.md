@@ -11,8 +11,8 @@ Livewire (Volt), dan Flux UI. Ada dua peran: **Admin** yang bikin & kelola quiz,
 - Question Management — admin kelola soal pilihan ganda per quiz (opsi jawaban, tandai
   yang benar, urutan soal).
 - Quiz Submission — peserta ngerjain quiz published, jawaban otomatis diskor.
-- Result Display — peserta lihat hasil & riwayat sendiri, admin lihat semua submission
-  per quiz.
+- Result Display — peserta lihat skor & lulus/tidaknya sendiri (rincian benar/salah
+  per soal cuma buat admin, biar quiz-nya tetap adil buat dikerjain ulang).
 - Responsive UI — semua halaman jalan di layar mobile sampai desktop.
 
 **Bonus yang udah dikerjain:**
@@ -22,6 +22,8 @@ Livewire (Volt), dan Flux UI. Ada dua peran: **Admin** yang bikin & kelola quiz,
 - Testing pakai Pest (lihat `tests/`).
 - Dashboard analitik buat admin (grafik tren submission, quiz terpopuler, tingkat
   kelulusan).
+- Laporan lintas-quiz buat admin (`/admin/reports`) — filter hasil semua peserta dari
+  semua quiz sekaligus (nama/email, quiz, status lulus/tidak), bisa export CSV.
 - Security hardening: rate limiting di submit quiz & daftar akun, proteksi race
   condition pas submit, captcha (Cloudflare Turnstile) di halaman daftar.
 
