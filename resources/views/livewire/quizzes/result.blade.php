@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\QuizAttempt;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
@@ -15,6 +16,12 @@ new #[Layout('components.layouts.app')] class extends Component {
         abort_unless($attempt->isCompleted(), 404);
 
         $this->attempt = $attempt;
+    }
+
+    #[Computed]
+    public function isAdmin(): bool
+    {
+        return Auth::user()->isAdmin();
     }
 
     #[Computed]
@@ -45,32 +52,41 @@ new #[Layout('components.layouts.app')] class extends Component {
         </p>
     </div>
 
-    <div class="flex flex-col gap-3">
-        @foreach ($this->answers as $index => $answer)
-            <div class="rounded-2xl border p-5 {{ $answer->is_correct ? 'border-emerald-200 dark:border-emerald-900' : 'border-red-200 dark:border-red-900' }}">
-                <div class="flex items-start justify-between gap-4">
-                    <div class="flex gap-3">
-                        <div class="flex size-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-bold {{ $answer->is_correct ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950' : 'bg-red-100 text-red-600 dark:bg-red-950' }}">
-                            {{ $index + 1 }}
+    @if ($this->isAdmin)
+        <div class="flex flex-col gap-3">
+            @foreach ($this->answers as $index => $answer)
+                <div class="rounded-2xl border p-5 {{ $answer->is_correct ? 'border-emerald-200 dark:border-emerald-900' : 'border-red-200 dark:border-red-900' }}">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex gap-3">
+                            <div class="flex size-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-bold {{ $answer->is_correct ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950' : 'bg-red-100 text-red-600 dark:bg-red-950' }}">
+                                {{ $index + 1 }}
+                            </div>
+                            <p class="pt-0.5 font-semibold text-zinc-900 dark:text-white">{{ $answer->question->question_text }}</p>
                         </div>
-                        <p class="pt-0.5 font-semibold text-zinc-900 dark:text-white">{{ $answer->question->question_text }}</p>
+                        <flux:badge :color="$answer->is_correct ? 'green' : 'red'" size="sm" class="shrink-0">
+                            {{ $answer->is_correct ? 'Benar' : 'Salah' }}
+                        </flux:badge>
                     </div>
-                    <flux:badge :color="$answer->is_correct ? 'green' : 'red'" size="sm" class="shrink-0">
-                        {{ $answer->is_correct ? 'Benar' : 'Salah' }}
-                    </flux:badge>
-                </div>
 
-                <div class="mt-3 space-y-1 pl-10 text-sm">
-                    <p class="text-zinc-500 dark:text-zinc-400">
-                        Jawabanmu: <span class="font-semibold text-zinc-900 dark:text-white">{{ $answer->selectedOption->option_text ?? '(tidak dijawab)' }}</span>
-                    </p>
-                    @unless ($answer->is_correct)
+                    <div class="mt-3 space-y-1 pl-10 text-sm">
                         <p class="text-zinc-500 dark:text-zinc-400">
-                            Jawaban benar: <span class="font-semibold text-emerald-600 dark:text-emerald-400">{{ $answer->question->correctOption->option_text ?? 'Soal ini sudah diubah, jawaban benar tidak tersedia lagi.' }}</span>
+                            Jawaban peserta: <span class="font-semibold text-zinc-900 dark:text-white">{{ $answer->selectedOption->option_text ?? '(tidak dijawab)' }}</span>
                         </p>
-                    @endunless
+                        @unless ($answer->is_correct)
+                            <p class="text-zinc-500 dark:text-zinc-400">
+                                Jawaban benar: <span class="font-semibold text-emerald-600 dark:text-emerald-400">{{ $answer->question->correctOption->option_text ?? 'Soal ini sudah diubah, jawaban benar tidak tersedia lagi.' }}</span>
+                            </p>
+                        @endunless
+                    </div>
                 </div>
-            </div>
-        @endforeach
-    </div>
+            @endforeach
+        </div>
+    @else
+        <div class="rounded-2xl border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
+            <flux:icon.eye-slash class="mx-auto size-7 text-zinc-300" />
+            <p class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+                Rincian benar/salah tiap soal gak ditampilin, biar quiz ini tetap adil buat dikerjain ulang.
+            </p>
+        </div>
+    @endif
 </div>

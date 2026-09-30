@@ -47,7 +47,16 @@ test('a participant can view their own result', function () {
 
     $response = $this->actingAs($participant)->get(route('quizzes.attempts.result', $attempt));
 
-    $response->assertOk()->assertSee('80%')->assertSee('Benar');
+    $response->assertOk()->assertSee('80%');
+});
+
+test('a participant does not see the per-question answer breakdown', function () {
+    $participant = User::factory()->create();
+    $attempt = completedAttemptFor($participant, 0);
+
+    $response = $this->actingAs($participant)->get(route('quizzes.attempts.result', $attempt));
+
+    $response->assertOk()->assertDontSee('Jawaban benar:')->assertDontSee('Jawaban peserta:');
 });
 
 test('a participant cannot view someone else\'s result', function () {
@@ -70,6 +79,16 @@ test('an admin can view any participant\'s result', function () {
     $response->assertOk();
 });
 
+test('an admin sees the per-question answer breakdown', function () {
+    $admin = User::factory()->admin()->create();
+    $participant = User::factory()->create();
+    $attempt = completedAttemptFor($participant, 0);
+
+    $response = $this->actingAs($admin)->get(route('quizzes.attempts.result', $attempt));
+
+    $response->assertOk()->assertSee('Jawaban benar:')->assertSee('(tidak dijawab)');
+});
+
 test('the result page 404s for an attempt still in progress', function () {
     $participant = User::factory()->create();
     $quiz = Quiz::factory()->published()->create();
@@ -78,15 +97,6 @@ test('the result page 404s for an attempt still in progress', function () {
     $response = $this->actingAs($participant)->get(route('quizzes.attempts.result', $attempt));
 
     $response->assertNotFound();
-});
-
-test('the breakdown shows the correct answer for a wrong response', function () {
-    $participant = User::factory()->create();
-    $attempt = completedAttemptFor($participant, 0);
-
-    $response = $this->actingAs($participant)->get(route('quizzes.attempts.result', $attempt));
-
-    $response->assertOk()->assertSee('(tidak dijawab)')->assertSee('Benar');
 });
 
 test('a participant only sees their own attempts in history', function () {
