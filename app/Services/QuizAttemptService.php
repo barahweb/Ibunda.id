@@ -29,7 +29,35 @@ class QuizAttemptService
     }
 
     /**
-     * @param  array<string, string>  $answers  question_id => selected_option_id
+     * Simpan pilihan jawaban sementara selama attempt masih berjalan (autosave). Diabaikan
+     * kalau attempt udah selesai atau lewat batas waktu, biar jawaban yang udah diskor
+     * gak bisa berubah.
+     */
+    public function saveAnswer(QuizAttempt $attempt, string $questionId, string $optionId): void
+    {
+        DB::transaction(function () use ($attempt, $questionId, $optionId) {
+            $locked = QuizAttempt::whereKey($attempt->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->isCompleted() || $locked->isExpired()) {
+                return;
+            }
+
+            $question = $locked->quiz->questions()->with('options')->find($questionId);
+
+            if ($question === null || !$question->options->contains('id', $optionId)) {
+                return;
+            }
+
+            $locked->answers()->updateOrCreate(
+                ['question_id' => $question->id],
+                ['selected_option_id' => $optionId],
+            );
+        });
+    }
+
+    /**
+     * @param  array<string, string>  $answers  question_id => selected_option_id. Soal yang
+     *                                          gak ada di sini dinilai dari jawaban yang udah tersimpan (autosave).
      */
     public function submit(QuizAttempt $attempt, array $answers): QuizAttempt
     {
@@ -43,11 +71,13 @@ class QuizAttemptService
                 return $locked;
             }
 
+            $savedAnswers = $locked->answers()->whereNotNull('selected_option_id')->pluck('selected_option_id', 'question_id');
+
             $totalPoints = 0;
             $earnedPoints = 0;
 
             foreach ($locked->quiz->questions()->with('options')->get() as $question) {
-                $selectedOptionId = $answers[$question->id] ?? null;
+                $selectedOptionId = $answers[$question->id] ?? $savedAnswers->get($question->id);
 
                 // Opsi yang dipilih wajib benar-benar milik soal ini, kalau nggak, anggap
                 // belum dijawab. Ini jaga-jaga terhadap payload yang dipalsukan (option_id
@@ -59,12 +89,14 @@ class QuizAttemptService
                 $isCorrect = $selectedOptionId !== null
                     && $question->correctOption?->id === $selectedOptionId;
 
-                $locked->answers()->create([
-                    'question_id' => $question->id,
-                    'selected_option_id' => $selectedOptionId,
-                    'is_correct' => $isCorrect,
-                    'points_awarded' => $isCorrect ? $question->points : 0,
-                ]);
+                $locked->answers()->updateOrCreate(
+                    ['question_id' => $question->id],
+                    [
+                        'selected_option_id' => $selectedOptionId,
+                        'is_correct' => $isCorrect,
+                        'points_awarded' => $isCorrect ? $question->points : 0,
+                    ],
+                );
 
                 $totalPoints += $question->points;
                 $earnedPoints += $isCorrect ? $question->points : 0;

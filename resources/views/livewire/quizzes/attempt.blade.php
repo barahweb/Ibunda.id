@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Renderless;
 use Livewire\Volt\Component;
 
 new #[Layout('components.layouts.app')] class extends Component {
@@ -26,12 +27,48 @@ new #[Layout('components.layouts.app')] class extends Component {
 
         $this->quiz = $quiz;
         $this->attempt = $quizAttemptService->startOrResume($quiz, Auth::user());
+
+        // Attempt yang udah lewat batas waktunya (misal tab ditutup terus dibuka lagi)
+        // langsung ditutup dan dinilai dari jawaban yang sempat tersimpan.
+        if ($this->attempt->isExpired()) {
+            $this->attempt = $quizAttemptService->submit($this->attempt, []);
+        }
+
+        $this->answers = $this->attempt->answers()
+            ->whereNotNull('selected_option_id')
+            ->pluck('selected_option_id', 'question_id')
+            ->all();
+    }
+
+    #[Renderless]
+    public function saveAnswer(string $questionId, string $optionId, QuizAttemptService $quizAttemptService): void
+    {
+        $quizAttemptService->saveAnswer($this->attempt, $questionId, $optionId);
     }
 
     #[Computed]
     public function questions()
     {
         return $this->quiz->questions()->with('options')->get();
+    }
+
+    #[Computed]
+    public function remainingSeconds(): ?int
+    {
+        return $this->attempt->remainingSeconds();
+    }
+
+    public function autoSubmit(QuizAttemptService $quizAttemptService): void
+    {
+        if ($this->attempt->isCompleted()) {
+            return;
+        }
+
+        // Toleransi 5 detik buat selisih jam browser vs server. Di luar itu aksi ini
+        // ditolak, biar gak bisa dipakai nge-submit lebih awal tanpa cek "semua soal dijawab".
+        abort_unless($this->attempt->isExpired(graceSeconds: 5), 403);
+
+        $this->attempt = $quizAttemptService->submit($this->attempt, $this->answers);
     }
 
     public function submit(QuizAttemptService $quizAttemptService): void
@@ -92,6 +129,44 @@ new #[Layout('components.layouts.app')] class extends Component {
             </div>
         </div>
     @else
+        @if ($this->remainingSeconds !== null)
+            <div
+                x-data="{
+                    remaining: {{ $this->remainingSeconds }},
+                    get label() {
+                        const minutes = String(Math.floor(this.remaining / 60)).padStart(2, '0');
+                        const seconds = String(this.remaining % 60).padStart(2, '0');
+
+                        return `${minutes}:${seconds}`;
+                    },
+                }"
+                x-init="
+                    const timer = setInterval(() => {
+                        if (remaining <= 0) {
+                            clearInterval(timer);
+                            $wire.autoSubmit();
+
+                            return;
+                        }
+
+                        remaining--;
+                    }, 1000);
+                "
+                class="sticky top-2 z-10 flex items-center justify-between rounded-2xl border bg-white/90 px-5 py-3 shadow-sm backdrop-blur"
+                :class="remaining <= 60 ? 'border-red-300' : 'border-zinc-200'"
+            >
+                <span class="flex items-center gap-2 text-sm font-semibold text-zinc-600">
+                    <flux:icon.clock class="size-4" />
+                    Sisa waktu
+                </span>
+                <span
+                    class="font-display text-xl font-extrabold tabular-nums"
+                    :class="remaining <= 60 ? 'text-red-600' : 'text-zinc-900'"
+                    x-text="label"
+                ></span>
+            </div>
+        @endif
+
         <form wire:submit="submit" class="flex flex-col gap-5">
             @foreach ($this->questions as $index => $question)
                 <div wire:key="question-{{ $question->id }}" class="rounded-2xl border border-zinc-200 p-5 dark:border-zinc-700">
@@ -105,7 +180,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                     <div class="mt-4 flex flex-col gap-2.5 pl-10">
                         @foreach ($question->options as $option)
                             <label class="flex items-center gap-2.5 rounded-xl border border-zinc-200 px-4 py-3 text-sm text-zinc-700 transition has-[:checked]:border-accent has-[:checked]:bg-blue-50 has-[:checked]:font-semibold has-[:checked]:text-blue-900 dark:border-zinc-700 dark:text-zinc-300">
-                                <input type="radio" wire:model="answers.{{ $question->id }}" value="{{ $option->id }}" class="size-4 accent-accent" />
+                                <input type="radio" wire:model="answers.{{ $question->id }}" wire:change="saveAnswer('{{ $question->id }}', '{{ $option->id }}')" value="{{ $option->id }}" class="size-4 accent-accent" />
                                 {{ $option->option_text }}
                             </label>
                         @endforeach

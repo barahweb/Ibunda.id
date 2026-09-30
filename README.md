@@ -10,7 +10,10 @@ Livewire (Volt), dan Flux UI. Ada dua peran: **Admin** yang bikin & kelola quiz,
 - Quiz Management — admin bikin, edit, hapus, dan publish/unpublish quiz.
 - Question Management — admin kelola soal pilihan ganda per quiz (opsi jawaban, tandai
   yang benar, urutan soal).
-- Quiz Submission — peserta ngerjain quiz published, jawaban otomatis diskor.
+- Quiz Submission — peserta ngerjain quiz published, jawaban otomatis diskor dan
+  tersimpan tiap kali milih opsi (gak hilang kalau tab ketutup). Kalau quiz punya batas
+  waktu, ada countdown live dan jawaban otomatis ke-submit pas waktu habis. Halaman
+  riwayat nampilin sisa waktu dan progress soal terjawab buat attempt yang belum selesai.
 - Result Display — peserta lihat skor & lulus/tidaknya sendiri (rincian benar/salah
   per soal cuma buat admin, biar quiz-nya tetap adil buat dikerjain ulang).
 - Responsive UI — semua halaman jalan di layar mobile sampai desktop.
@@ -74,6 +77,22 @@ Livewire (Volt), dan Flux UI. Ada dua peran: **Admin** yang bikin & kelola quiz,
 |---|---|---|
 | Admin | `admin@example.com` | `password` |
 | Peserta | `test@example.com` | `password` |
+
+### Scheduler (penutupan otomatis attempt kadaluarsa)
+
+Attempt quiz yang batas waktunya lewat ditutup otomatis oleh command
+`quiz:close-expired-attempts`, dijadwalkan tiap menit lewat scheduler Laravel
+(`routes/console.php`). Scheduler harus jalan biar ini aktif:
+
+- **Lokal:** `php artisan schedule:work` di terminal terpisah.
+- **Server/production:** pasang cron yang manggil `schedule:run` tiap menit:
+  ```
+  * * * * * cd /path/ke/project && php artisan schedule:run >> /dev/null 2>&1
+  ```
+  Atau pakai fitur scheduler bawaan platform hosting kalau ada.
+
+Tanpa scheduler, aplikasi tetap jalan: attempt ditutup pas timer di browser habis atau pas
+peserta buka quiz-nya lagi. Scheduler cuma nutup attempt yang ditinggalin begitu aja.
 
 ### Captcha di halaman daftar (opsional)
 
