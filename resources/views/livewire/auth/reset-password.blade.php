@@ -13,8 +13,11 @@ use Livewire\Volt\Component;
 new #[Layout('components.layouts.auth')] class extends Component {
     #[Locked]
     public string $token = '';
+
     public string $email = '';
+
     public string $password = '';
+
     public string $password_confirmation = '';
 
     /**
@@ -57,14 +60,28 @@ new #[Layout('components.layouts.auth')] class extends Component {
         // the application's home authenticated view. If there is an error we can
         // redirect them back to where they came from with their error message.
         if ($status != Password::PasswordReset) {
-            $this->addError('email', __($status));
+            $this->addError('email', $this->statusMessage($status));
 
             return;
         }
 
-        Session::flash('status', __($status));
+        Session::flash('status', $this->statusMessage($status));
 
         $this->redirectRoute('login', navigate: true);
+    }
+
+    /**
+     * Terjemahkan status dari password broker ke pesan Bahasa Indonesia.
+     */
+    protected function statusMessage(string $status): string
+    {
+        return match ($status) {
+            Password::PasswordReset => 'Password berhasil diubah, silakan masuk pakai password baru.',
+            Password::InvalidToken => 'Link reset password ini sudah tidak berlaku, coba minta link baru.',
+            Password::InvalidUser => 'Email ini tidak terdaftar.',
+            Password::ResetThrottled => 'Tunggu sebentar dulu sebelum coba reset password lagi.',
+            default => 'Gagal reset password, coba lagi.',
+        };
     }
 }; ?>
 

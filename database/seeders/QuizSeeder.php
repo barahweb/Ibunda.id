@@ -15,7 +15,7 @@ class QuizSeeder extends Seeder
     {
         $admin = User::where('role', User::ROLE_ADMIN)->first();
 
-        if (! $admin) {
+        if (!$admin) {
             return;
         }
 

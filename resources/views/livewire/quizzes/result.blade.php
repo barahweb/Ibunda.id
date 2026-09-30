@@ -34,7 +34,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     <div class="rounded-2xl border border-zinc-200 p-10 text-center dark:border-zinc-700">
         <flux:heading size="xl" class="font-display">{{ $attempt->quiz->title }}</flux:heading>
-        <p class="mt-2 font-display text-5xl font-extrabold {{ $attempt->quiz->passing_score !== null && ! $attempt->hasPassed() ? 'text-red-500' : 'text-accent' }}">{{ $attempt->score }}%</p>
+        <p class="mt-2 font-display text-5xl font-extrabold {{ $attempt->quiz->passing_score !== null && $attempt->hasPassed() ? 'text-red-500' : 'text-accent' }}">{{ $attempt->score }}%</p>
         @if ($attempt->quiz->passing_score !== null)
             <flux:badge :color="$attempt->hasPassed() ? 'green' : 'red'" class="mt-3">
                 {{ $attempt->hasPassed() ? 'Lulus' : 'Belum Lulus' }} &middot; Nilai lulus {{ $attempt->quiz->passing_score }}%
