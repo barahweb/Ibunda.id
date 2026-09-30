@@ -9,7 +9,12 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Sora', ui-sans-serif, system-ui, sans-serif;
+
+    --animate-blob-drift: blob-drift 9s ease-in-out infinite;
+    --animate-gentle-bounce: gentle-bounce 3.4s ease-in-out infinite;
+    --animate-soft-pulse: soft-pulse 2.6s ease-in-out infinite;
 
     --color-zinc-50: #fafafa;
     --color-zinc-100: #f5f5f5;
@@ -23,16 +28,16 @@
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
 
-    --color-accent: var(--color-neutral-800);
-    --color-accent-content: var(--color-neutral-800);
+    --color-accent: #2563eb;
+    --color-accent-content: #2563eb;
     --color-accent-foreground: var(--color-white);
 }
 
 @layer theme {
     .dark {
-        --color-accent: var(--color-white);
-        --color-accent-content: var(--color-white);
-        --color-accent-foreground: var(--color-neutral-800);
+        --color-accent: #3b82f6;
+        --color-accent-content: #3b82f6;
+        --color-accent-foreground: var(--color-white);
     }
 }
 
@@ -45,6 +50,21 @@
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
     }
+}
+
+@keyframes blob-drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(24px, -18px) scale(1.06); }
+}
+
+@keyframes gentle-bounce {
+    0%, 100% { transform: translateY(0) rotate(var(--tw-rotate, 0)); }
+    50% { transform: translateY(-10px) rotate(var(--tw-rotate, 0)); }
+}
+
+@keyframes soft-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgb(37 99 235 / 0.25); }
+    50% { box-shadow: 0 0 0 10px rgb(37 99 235 / 0); }
 }
 
 [data-flux-field] {

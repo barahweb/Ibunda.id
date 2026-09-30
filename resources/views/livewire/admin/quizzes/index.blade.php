@@ -41,6 +41,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     {
         return Quiz::query()
             ->with('creator')
+            ->withCount('questions')
             ->when($this->search, fn ($query) => $query->where('title', 'like', "%{$this->search}%"))
             ->latest()
             ->paginate(10);
@@ -127,47 +128,55 @@ new #[Layout('components.layouts.app')] class extends Component {
 <div class="flex flex-col gap-6">
     <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
-            <flux:heading size="xl">Quiz Management</flux:heading>
+            <flux:heading size="xl" class="font-display">Quiz Management</flux:heading>
             <flux:subheading>Kelola quiz yang bisa dikerjakan peserta.</flux:subheading>
         </div>
 
-        <flux:button variant="primary" icon="plus" wire:click="createQuiz">
+        <flux:button variant="primary" icon="plus" wire:click="createQuiz" class="transition hover:-translate-y-0.5">
             Tambah Quiz
         </flux:button>
     </div>
 
     <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Cari judul quiz…" class="max-w-sm" />
 
-    <div class="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700">
+    <div class="overflow-x-auto rounded-2xl border border-zinc-200 dark:border-zinc-700">
         <table class="w-full text-left text-sm">
             <thead class="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
                 <tr>
-                    <th class="px-4 py-3">Judul</th>
-                    <th class="px-4 py-3">Status</th>
-                    <th class="px-4 py-3">Waktu</th>
-                    <th class="px-4 py-3">Nilai Lulus</th>
-                    <th class="px-4 py-3">Dibuat oleh</th>
-                    <th class="px-4 py-3 text-right">Aksi</th>
+                    <th class="px-5 py-3.5">Judul</th>
+                    <th class="px-5 py-3.5">Status</th>
+                    <th class="px-5 py-3.5">Jumlah Soal</th>
+                    <th class="px-5 py-3.5">Waktu</th>
+                    <th class="px-5 py-3.5">Nilai Lulus</th>
+                    <th class="px-5 py-3.5">Dibuat oleh</th>
+                    <th class="px-5 py-3.5 text-center">Aksi</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
                 @forelse ($this->quizzes as $quiz)
-                    <tr wire:key="quiz-{{ $quiz->id }}">
-                        <td class="px-4 py-3 font-medium text-zinc-900 dark:text-white">{{ $quiz->title }}</td>
-                        <td class="px-4 py-3">
+                    <tr wire:key="quiz-{{ $quiz->id }}" class="transition hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                        <td class="px-5 py-4 font-semibold text-zinc-900 dark:text-white">{{ $quiz->title }}</td>
+                        <td class="px-5 py-4">
                             <flux:badge :color="$quiz->isPublished() ? 'green' : 'zinc'" size="sm">
                                 {{ $quiz->isPublished() ? 'Published' : 'Draft' }}
                             </flux:badge>
                         </td>
-                        <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                        <td class="px-5 py-4">
+                            @if ($quiz->questions_count === 0)
+                                <span class="font-semibold text-red-500">0 soal &middot; belum bisa publish</span>
+                            @else
+                                <span class="text-zinc-500 dark:text-zinc-400">{{ $quiz->questions_count }} soal</span>
+                            @endif
+                        </td>
+                        <td class="px-5 py-4 text-zinc-500 dark:text-zinc-400">
                             {{ $quiz->time_limit_minutes ? "{$quiz->time_limit_minutes} menit" : '—' }}
                         </td>
-                        <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                        <td class="px-5 py-4 text-zinc-500 dark:text-zinc-400">
                             {{ $quiz->passing_score !== null ? "{$quiz->passing_score}%" : '—' }}
                         </td>
-                        <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400">{{ $quiz->creator->name }}</td>
-                        <td class="px-4 py-3">
-                            <div class="flex justify-end gap-1">
+                        <td class="px-5 py-4 text-zinc-500 dark:text-zinc-400">{{ $quiz->creator->name }}</td>
+                        <td class="px-5 py-4">
+                            <div class="flex justify-center gap-1">
                                 <flux:button size="sm" variant="ghost" :href="route('admin.quizzes.questions', $quiz)" wire:navigate>
                                     Soal
                                 </flux:button>
@@ -190,8 +199,11 @@ new #[Layout('components.layouts.app')] class extends Component {
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">
-                            Belum ada quiz. Klik "Tambah Quiz" buat bikin yang pertama.
+                        <td colspan="7" class="px-5 py-14 text-center">
+                            <flux:icon.clipboard-document-list class="mx-auto size-8 text-zinc-300" />
+                            <p class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+                                Belum ada quiz. Klik "Tambah Quiz" buat bikin yang pertama.
+                            </p>
                         </td>
                     </tr>
                 @endforelse
@@ -204,7 +216,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     <flux:modal wire:model.self="showFormModal" class="max-w-lg">
         <form wire:submit="save" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ $editingQuizId ? 'Edit Quiz' : 'Tambah Quiz' }}</flux:heading>
+                <flux:heading size="lg" class="font-display">{{ $editingQuizId ? 'Edit Quiz' : 'Tambah Quiz' }}</flux:heading>
                 <flux:subheading>Quiz baru tersimpan sebagai draft, publish lewat tombol di daftar.</flux:subheading>
             </div>
 
@@ -212,7 +224,7 @@ new #[Layout('components.layouts.app')] class extends Component {
 
             <flux:textarea wire:model="description" label="Deskripsi" placeholder="Opsional" rows="3" />
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <flux:input wire:model="time_limit_minutes" type="number" label="Batas waktu (menit)" placeholder="Opsional" />
                 <flux:input wire:model="passing_score" type="number" label="Nilai lulus (%)" placeholder="Opsional" />
             </div>

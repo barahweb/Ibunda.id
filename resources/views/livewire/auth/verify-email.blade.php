@@ -34,28 +34,30 @@ new #[Layout('components.layouts.auth')] class extends Component {
     }
 }; ?>
 
-<div class="mt-4 flex flex-col gap-6">
-    <div class="text-center text-sm text-gray-600">
-        {{ __('Please verify your email address by clicking on the link we just emailed to you.') }}
-    </div>
+<div class="flex flex-col gap-6">
+    <x-auth-header title="Verifikasi Email" description="Cek inbox kamu buat lanjut." />
+
+    <p class="text-sm text-zinc-500">
+        Konfirmasi alamat emailmu dengan klik link yang baru kami kirim ke emailmu.
+    </p>
 
     @if (session('status') == 'verification-link-sent')
-        <div class="font-medium text-center text-sm text-green-600">
-            {{ __('A new verification link has been sent to the email address you provided during registration.') }}
+        <div class="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            Link verifikasi baru sudah dikirim ke email yang kamu daftarkan.
         </div>
     @endif
 
-    <div class="flex flex-col items-center justify-between space-y-3">
+    <div class="flex flex-col gap-3">
         <flux:button wire:click="sendVerification" variant="primary" class="w-full">
-            {{ __('Resend verification email') }}
+            Kirim Ulang Email Verifikasi
         </flux:button>
 
         <button
             wire:click="logout"
             type="submit"
-            class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            class="text-center text-sm text-zinc-500 underline transition hover:text-zinc-900"
         >
-            {{ __('Log out') }}
+            Keluar
         </button>
     </div>
 </div>

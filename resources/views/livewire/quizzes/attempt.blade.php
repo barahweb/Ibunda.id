@@ -57,36 +57,41 @@ new #[Layout('components.layouts.app')] class extends Component {
     </div>
 
     <div>
-        <flux:heading size="xl">{{ $quiz->title }}</flux:heading>
+        <flux:heading size="xl" class="font-display">{{ $quiz->title }}</flux:heading>
         @if ($quiz->description)
             <flux:subheading>{{ $quiz->description }}</flux:subheading>
         @endif
     </div>
 
     @if ($attempt->isCompleted())
-        <div class="rounded-lg border border-zinc-200 p-6 text-center dark:border-zinc-700">
-            <flux:heading size="lg">Quiz Selesai</flux:heading>
-            <p class="mt-2 text-3xl font-bold text-zinc-900 dark:text-white">{{ $attempt->score }}%</p>
+        <div class="rounded-2xl border border-zinc-200 p-10 text-center dark:border-zinc-700">
+            <flux:heading size="lg" class="font-display">Quiz Selesai</flux:heading>
+            <p class="mt-2 font-display text-4xl font-extrabold text-zinc-900 dark:text-white">{{ $attempt->score }}%</p>
             @if ($quiz->passing_score !== null)
-                <flux:badge :color="$attempt->hasPassed() ? 'green' : 'red'" class="mt-2">
+                <flux:badge :color="$attempt->hasPassed() ? 'green' : 'red'" class="mt-3">
                     {{ $attempt->hasPassed() ? 'Lulus' : 'Belum Lulus' }}
                 </flux:badge>
             @endif
-            <div class="mt-4 flex justify-center gap-2">
-                <flux:button variant="primary" :href="route('quizzes.attempts.result', $attempt)" wire:navigate>Lihat Detail Hasil</flux:button>
-                <flux:button :href="route('quizzes.index')" wire:navigate>Kembali ke Daftar Quiz</flux:button>
+            <div class="mt-6 flex justify-center gap-2">
+                <flux:button variant="primary" :href="route('quizzes.attempts.result', $attempt)" wire:navigate class="transition hover:-translate-y-0.5">Lihat Detail Hasil</flux:button>
+                <flux:button :href="route('quizzes.index')" wire:navigate class="transition hover:-translate-y-0.5">Kembali ke Daftar Quiz</flux:button>
             </div>
         </div>
     @else
-        <form wire:submit="submit" class="flex flex-col gap-6">
+        <form wire:submit="submit" class="flex flex-col gap-5">
             @foreach ($this->questions as $index => $question)
-                <div wire:key="question-{{ $question->id }}" class="rounded-lg border border-zinc-200 p-4 dark:border-zinc-700">
-                    <p class="font-medium text-zinc-900 dark:text-white">{{ $index + 1 }}. {{ $question->question_text }}</p>
+                <div wire:key="question-{{ $question->id }}" class="rounded-2xl border border-zinc-200 p-5 dark:border-zinc-700">
+                    <div class="flex gap-3">
+                        <div class="flex size-7 shrink-0 items-center justify-center rounded-full bg-blue-100 font-display text-xs font-bold text-accent dark:bg-blue-950">
+                            {{ $index + 1 }}
+                        </div>
+                        <p class="pt-0.5 font-semibold text-zinc-900 dark:text-white">{{ $question->question_text }}</p>
+                    </div>
 
-                    <div class="mt-3 flex flex-col gap-2">
+                    <div class="mt-4 flex flex-col gap-2.5 pl-10">
                         @foreach ($question->options as $option)
-                            <label class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-                                <input type="radio" wire:model="answers.{{ $question->id }}" value="{{ $option->id }}" class="size-4" />
+                            <label class="flex items-center gap-2.5 rounded-xl border border-zinc-200 px-4 py-3 text-sm text-zinc-700 transition has-[:checked]:border-accent has-[:checked]:bg-blue-50 has-[:checked]:font-semibold has-[:checked]:text-blue-900 dark:border-zinc-700 dark:text-zinc-300">
+                                <input type="radio" wire:model="answers.{{ $question->id }}" value="{{ $option->id }}" class="size-4 accent-accent" />
                                 {{ $option->option_text }}
                             </label>
                         @endforeach
@@ -94,7 +99,7 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </div>
             @endforeach
 
-            <flux:button variant="primary" type="submit" class="self-start">Submit Jawaban</flux:button>
+            <flux:button variant="primary" type="submit" class="self-start transition hover:-translate-y-0.5">Submit Jawaban</flux:button>
         </form>
     @endif
 </div>

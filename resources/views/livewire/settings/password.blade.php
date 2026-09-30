@@ -41,12 +41,12 @@ new #[Layout('components.layouts.app')] class extends Component {
 <section class="w-full">
     @include('partials.settings-heading')
 
-    <x-settings.layout heading="Update password" subheading="Ensure your account is using a long, random password to stay secure">
+    <x-settings.layout heading="Ubah Password" subheading="Pastikan akunmu pakai password yang panjang dan acak biar tetap aman.">
         <form wire:submit="updatePassword" class="mt-6 space-y-6">
             <flux:input
                 wire:model="current_password"
                 id="update_password_current_passwordpassword"
-                label="{{ __('Current password') }}"
+                label="Password Saat Ini"
                 type="password"
                 name="current_password"
                 required
@@ -55,7 +55,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             <flux:input
                 wire:model="password"
                 id="update_password_password"
-                label="{{ __('New password') }}"
+                label="Password Baru"
                 type="password"
                 name="password"
                 required
@@ -64,7 +64,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             <flux:input
                 wire:model="password_confirmation"
                 id="update_password_password_confirmation"
-                label="{{ __('Confirm Password') }}"
+                label="Konfirmasi Password"
                 type="password"
                 name="password_confirmation"
                 required
@@ -73,11 +73,11 @@ new #[Layout('components.layouts.app')] class extends Component {
 
             <div class="flex items-center gap-4">
                 <div class="flex items-center justify-end">
-                    <flux:button variant="primary" type="submit" class="w-full">{{ __('Save') }}</flux:button>
+                    <flux:button variant="primary" type="submit" class="w-full transition hover:-translate-y-0.5">Simpan</flux:button>
                 </div>
 
                 <x-action-message class="me-3" on="password-updated">
-                    {{ __('Saved.') }}
+                    Tersimpan.
                 </x-action-message>
             </div>
         </form>

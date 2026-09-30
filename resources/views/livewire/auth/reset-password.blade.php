@@ -69,49 +69,41 @@ new #[Layout('components.layouts.auth')] class extends Component {
 }; ?>
 
 <div class="flex flex-col gap-6">
-    <x-auth-header title="Reset password" description="Please enter your new password below" />
+    <x-auth-header title="Reset Password" description="Masukkan password baru kamu di bawah ini." />
 
     <!-- Session Status -->
-    <x-auth-session-status class="text-center" :status="session('status')" />
+    <x-auth-session-status :status="session('status')" />
 
-    <form wire:submit="resetPassword" class="flex flex-col gap-6">
+    <form wire:submit="resetPassword" class="flex flex-col gap-5">
         <!-- Email Address -->
-        <div class="grid gap-2">
-            <flux:input wire:model="email" id="email" label="{{ __('Email') }}" type="email" name="email" required autocomplete="email" />
-        </div>
+        <flux:input wire:model="email" id="email" label="Email" type="email" name="email" required autocomplete="email" />
 
         <!-- Password -->
-        <div class="grid gap-2">
-            <flux:input
-                wire:model="password"
-                id="password"
-                label="{{ __('Password') }}"
-                type="password"
-                name="password"
-                required
-                autocomplete="new-password"
-                placeholder="Password"
-            />
-        </div>
+        <flux:input
+            wire:model="password"
+            id="password"
+            label="Password Baru"
+            type="password"
+            name="password"
+            required
+            autocomplete="new-password"
+            placeholder="Password"
+        />
 
         <!-- Confirm Password -->
-        <div class="grid gap-2">
-            <flux:input
-                wire:model="password_confirmation"
-                id="password_confirmation"
-                label="{{ __('Confirm password') }}"
-                type="password"
-                name="password_confirmation"
-                required
-                autocomplete="new-password"
-                placeholder="Confirm password"
-            />
-        </div>
+        <flux:input
+            wire:model="password_confirmation"
+            id="password_confirmation"
+            label="Konfirmasi Password"
+            type="password"
+            name="password_confirmation"
+            required
+            autocomplete="new-password"
+            placeholder="Ulangi password"
+        />
 
-        <div class="flex items-center justify-end">
-            <flux:button type="submit" variant="primary" class="w-full">
-                {{ __('Reset password') }}
-            </flux:button>
-        </div>
+        <flux:button type="submit" variant="primary" class="w-full">
+            Reset Password
+        </flux:button>
     </form>
 </div>

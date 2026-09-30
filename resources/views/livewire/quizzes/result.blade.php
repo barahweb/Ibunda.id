@@ -32,36 +32,41 @@ new #[Layout('components.layouts.app')] class extends Component {
         <flux:link :href="route('quizzes.history')" wire:navigate class="text-sm">&larr; Kembali ke Riwayat</flux:link>
     </div>
 
-    <div class="rounded-lg border border-zinc-200 p-6 text-center dark:border-zinc-700">
-        <flux:heading size="xl">{{ $attempt->quiz->title }}</flux:heading>
-        <p class="mt-2 text-4xl font-bold text-zinc-900 dark:text-white">{{ $attempt->score }}%</p>
+    <div class="rounded-2xl border border-zinc-200 p-10 text-center dark:border-zinc-700">
+        <flux:heading size="xl" class="font-display">{{ $attempt->quiz->title }}</flux:heading>
+        <p class="mt-2 font-display text-5xl font-extrabold {{ $attempt->quiz->passing_score !== null && ! $attempt->hasPassed() ? 'text-red-500' : 'text-accent' }}">{{ $attempt->score }}%</p>
         @if ($attempt->quiz->passing_score !== null)
-            <flux:badge :color="$attempt->hasPassed() ? 'green' : 'red'" class="mt-2">
+            <flux:badge :color="$attempt->hasPassed() ? 'green' : 'red'" class="mt-3">
                 {{ $attempt->hasPassed() ? 'Lulus' : 'Belum Lulus' }} &middot; Nilai lulus {{ $attempt->quiz->passing_score }}%
             </flux:badge>
         @endif
-        <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+        <p class="mt-3 text-xs text-zinc-400">
             Dikerjakan {{ $attempt->started_at->format('d M Y H:i') }}, submit {{ $attempt->submitted_at->format('d M Y H:i') }}
         </p>
     </div>
 
     <div class="flex flex-col gap-3">
         @foreach ($this->answers as $index => $answer)
-            <div class="rounded-lg border p-4 {{ $answer->is_correct ? 'border-green-200 dark:border-green-900' : 'border-red-200 dark:border-red-900' }}">
+            <div class="rounded-2xl border p-5 {{ $answer->is_correct ? 'border-emerald-200 dark:border-emerald-900' : 'border-red-200 dark:border-red-900' }}">
                 <div class="flex items-start justify-between gap-4">
-                    <p class="font-medium text-zinc-900 dark:text-white">{{ $index + 1 }}. {{ $answer->question->question_text }}</p>
-                    <flux:badge :color="$answer->is_correct ? 'green' : 'red'" size="sm">
+                    <div class="flex gap-3">
+                        <div class="flex size-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-bold {{ $answer->is_correct ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950' : 'bg-red-100 text-red-600 dark:bg-red-950' }}">
+                            {{ $index + 1 }}
+                        </div>
+                        <p class="pt-0.5 font-semibold text-zinc-900 dark:text-white">{{ $answer->question->question_text }}</p>
+                    </div>
+                    <flux:badge :color="$answer->is_correct ? 'green' : 'red'" size="sm" class="shrink-0">
                         {{ $answer->is_correct ? 'Benar' : 'Salah' }}
                     </flux:badge>
                 </div>
 
-                <div class="mt-3 space-y-1 text-sm">
-                    <p class="text-zinc-600 dark:text-zinc-400">
-                        Jawabanmu: <span class="font-medium text-zinc-900 dark:text-white">{{ $answer->selectedOption->option_text ?? '(tidak dijawab)' }}</span>
+                <div class="mt-3 space-y-1 pl-10 text-sm">
+                    <p class="text-zinc-500 dark:text-zinc-400">
+                        Jawabanmu: <span class="font-semibold text-zinc-900 dark:text-white">{{ $answer->selectedOption->option_text ?? '(tidak dijawab)' }}</span>
                     </p>
                     @unless ($answer->is_correct)
-                        <p class="text-zinc-600 dark:text-zinc-400">
-                            Jawaban benar: <span class="font-medium text-green-700 dark:text-green-400">{{ $answer->question->correctOption->option_text ?? 'Soal ini sudah diubah, jawaban benar tidak tersedia lagi.' }}</span>
+                        <p class="text-zinc-500 dark:text-zinc-400">
+                            Jawaban benar: <span class="font-semibold text-emerald-600 dark:text-emerald-400">{{ $answer->question->correctOption->option_text ?? 'Soal ini sudah diubah, jawaban benar tidak tersedia lagi.' }}</span>
                         </p>
                     @endunless
                 </div>

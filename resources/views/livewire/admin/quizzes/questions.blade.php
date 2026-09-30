@@ -165,31 +165,36 @@ new #[Layout('components.layouts.app')] class extends Component {
 
     <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
-            <flux:heading size="xl">{{ $quiz->title }}</flux:heading>
+            <flux:heading size="xl" class="font-display">{{ $quiz->title }}</flux:heading>
             <flux:subheading>Kelola soal &amp; pilihan jawaban buat quiz ini.</flux:subheading>
         </div>
 
-        <flux:button variant="primary" icon="plus" wire:click="createQuestion">
+        <flux:button variant="primary" icon="plus" wire:click="createQuestion" class="transition hover:-translate-y-0.5">
             Tambah Soal
         </flux:button>
     </div>
 
     <div class="flex flex-col gap-3">
         @forelse ($this->questions as $index => $question)
-            <div wire:key="question-{{ $question->id }}" class="rounded-lg border border-zinc-200 p-4 dark:border-zinc-700">
+            <div wire:key="question-{{ $question->id }}" class="rounded-2xl border border-zinc-200 p-5 transition hover:shadow-md dark:border-zinc-700">
                 <div class="flex items-start justify-between gap-4">
-                    <div class="flex-1">
-                        <p class="font-medium text-zinc-900 dark:text-white">{{ $index + 1 }}. {{ $question->question_text }}</p>
-                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{{ $question->points }} poin</p>
+                    <div class="flex flex-1 gap-3">
+                        <div class="flex size-7 shrink-0 items-center justify-center rounded-full bg-blue-100 font-display text-xs font-bold text-accent dark:bg-blue-950">
+                            {{ $index + 1 }}
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-semibold text-zinc-900 dark:text-white">{{ $question->question_text }}</p>
+                            <p class="mt-1 text-xs font-medium text-zinc-400">{{ $question->points }} poin</p>
 
-                        <ul class="mt-3 space-y-1">
-                            @foreach ($question->options as $option)
-                                <li class="flex items-center gap-2 text-sm {{ $option->is_correct ? 'font-medium text-green-600 dark:text-green-400' : 'text-zinc-600 dark:text-zinc-400' }}">
-                                    <flux:icon.check-circle :variant="$option->is_correct ? 'solid' : 'outline'" class="size-4 shrink-0" />
-                                    {{ $option->option_text }}
-                                </li>
-                            @endforeach
-                        </ul>
+                            <ul class="mt-3 flex flex-col gap-1.5">
+                                @foreach ($question->options as $option)
+                                    <li class="flex items-center gap-2 text-sm {{ $option->is_correct ? 'font-semibold text-emerald-600 dark:text-emerald-400' : 'text-zinc-500 dark:text-zinc-400' }}">
+                                        <flux:icon.check-circle :variant="$option->is_correct ? 'solid' : 'outline'" class="size-4 shrink-0" />
+                                        {{ $option->option_text }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
                     </div>
 
                     <div class="flex shrink-0 flex-col items-end gap-1">
@@ -211,8 +216,11 @@ new #[Layout('components.layouts.app')] class extends Component {
                 </div>
             </div>
         @empty
-            <div class="rounded-lg border border-dashed border-zinc-300 p-8 text-center text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-                Belum ada soal. Klik "Tambah Soal" buat bikin yang pertama.
+            <div class="rounded-2xl border border-dashed border-zinc-300 p-10 text-center dark:border-zinc-700">
+                <flux:icon.clipboard-document-list class="mx-auto size-8 text-zinc-300" />
+                <p class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+                    Belum ada soal. Klik "Tambah Soal" buat bikin yang pertama.
+                </p>
             </div>
         @endforelse
     </div>
@@ -220,7 +228,7 @@ new #[Layout('components.layouts.app')] class extends Component {
     <flux:modal wire:model.self="showFormModal" class="max-w-2xl">
         <form wire:submit="save" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ $editingQuestionId ? 'Edit Soal' : 'Tambah Soal' }}</flux:heading>
+                <flux:heading size="lg" class="font-display">{{ $editingQuestionId ? 'Edit Soal' : 'Tambah Soal' }}</flux:heading>
                 <flux:subheading>Tandai satu opsi sebagai jawaban benar.</flux:subheading>
             </div>
 

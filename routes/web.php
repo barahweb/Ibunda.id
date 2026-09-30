@@ -1,13 +1,21 @@
 <?php
 
+use App\Models\Quiz;
+use App\Models\QuizAttempt;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
 Route::get('/', function () {
-    return view('welcome');
+    $completedAttempts = QuizAttempt::query()->where('status', QuizAttempt::STATUS_COMPLETED);
+
+    return view('welcome', [
+        'availableQuizCount' => Quiz::query()->where('status', Quiz::STATUS_PUBLISHED)->count(),
+        'completedAttemptCount' => (clone $completedAttempts)->count(),
+        'averageScore' => (clone $completedAttempts)->avg('score'),
+    ]);
 })->name('home');
 
-Route::view('dashboard', 'dashboard')
+Volt::route('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
