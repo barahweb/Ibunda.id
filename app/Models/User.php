@@ -79,4 +79,14 @@ class User extends Authenticatable // implements MustVerifyEmail
     {
         return $this->hasMany(QuizAttempt::class);
     }
+
+    public function assessmentsCreated(): HasMany
+    {
+        return $this->hasMany(Assessment::class, 'created_by');
+    }
+
+    public function assessmentAttempts(): HasMany
+    {
+        return $this->hasMany(AssessmentAttempt::class);
+    }
 }
