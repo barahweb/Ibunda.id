@@ -28,7 +28,11 @@ new #[Layout('components.layouts.app')] class extends Component {
     public function answers()
     {
         return $this->attempt->answers()
-            ->with(['question' => fn ($query) => $query->withTrashed(), 'selectedOption' => fn ($query) => $query->withTrashed()])
+            ->with([
+                'question' => fn ($query) => $query->withTrashed(),
+                'question.correctOption' => fn ($query) => $query->withTrashed(),
+                'selectedOption' => fn ($query) => $query->withTrashed(),
+            ])
             ->get()
             ->sortBy(fn ($answer) => $answer->question->order);
     }
