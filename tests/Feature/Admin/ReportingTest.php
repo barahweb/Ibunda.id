@@ -113,3 +113,16 @@ test('admin can export the filtered report as csv', function () {
         ->call('export')
         ->assertFileDownloaded();
 });
+
+test('admin can export the filtered report as excel', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+    $quiz = Quiz::factory()->published()->create(['passing_score' => 70]);
+    $participant = User::factory()->create(['name' => 'Peserta Export']);
+
+    QuizAttempt::factory()->for($quiz)->for($participant)->completed(80)->create();
+
+    Volt::test('admin.reports.index')
+        ->call('exportExcel')
+        ->assertFileDownloaded();
+});

@@ -1,5 +1,6 @@
 <?php
 
+use App\Exports\QuizReportExport;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use Livewire\Attributes\Computed;
@@ -7,6 +8,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 new #[Layout('components.layouts.app')] class extends Component {
     use WithPagination;
@@ -110,6 +112,14 @@ new #[Layout('components.layouts.app')] class extends Component {
         }, 'laporan-quiz-'.now()->format('Y-m-d-His').'.csv');
     }
 
+    public function exportExcel(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        return Excel::download(
+            new QuizReportExport($this->filteredQuery()->get()),
+            'laporan-quiz-'.now()->format('Y-m-d-His').'.xlsx',
+        );
+    }
+
     #[Computed]
     public function stats(): array
     {
@@ -142,7 +152,10 @@ new #[Layout('components.layouts.app')] class extends Component {
             <flux:subheading>Semua hasil quiz dari seluruh peserta, dalam satu tempat.</flux:subheading>
         </div>
 
-        <flux:button icon="arrow-down-tray" wire:click="export">Export CSV</flux:button>
+        <div class="flex gap-2">
+            <flux:button icon="arrow-down-tray" wire:click="export">Export CSV</flux:button>
+            <flux:button icon="arrow-down-tray" wire:click="exportExcel">Export Excel</flux:button>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">

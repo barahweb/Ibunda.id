@@ -26,7 +26,8 @@ Livewire (Volt), dan Flux UI. Ada dua peran: **Admin** yang bikin & kelola quiz,
 - Dashboard analitik buat admin (grafik tren submission, quiz terpopuler, tingkat
   kelulusan).
 - Laporan lintas-quiz buat admin (`/admin/reports`) — filter hasil semua peserta dari
-  semua quiz sekaligus (nama/email, quiz, status lulus/tidak), bisa export CSV.
+  semua quiz sekaligus (nama/email, quiz, status lulus/tidak), bisa export CSV atau
+  Excel (.xlsx).
 - Kelola User (`/admin/users`) — admin lihat semua user, promote/demote jadi admin,
   gak perlu lagi lewat seeder/tinker manual.
 - Security hardening: rate limiting di submit quiz & daftar akun, proteksi race
