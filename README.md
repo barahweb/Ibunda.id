@@ -32,6 +32,13 @@ Livewire (Volt), dan Flux UI. Ada dua peran: **Admin** yang bikin & kelola quiz,
   gak perlu lagi lewat seeder/tinker manual.
 - Security hardening: rate limiting di submit quiz & daftar akun, proteksi race
   condition pas submit, captcha (Cloudflare Turnstile) di halaman daftar.
+- Tes Kepribadian (OEJTS) — menu terpisah dari Quiz. 32 pernyataan skala 1-5 (versi
+  Indonesia dari Open Extended Jungian Type Scales), hasilnya kode 4 huruf ala MBTI
+  (misal INTJ) plus skor per dimensi. Admin kelola pernyataan lewat
+  `/admin/assessments` (publish butuh pas 32 pernyataan, 8 per dimensi), peserta lihat
+  hasil dan riwayatnya sendiri. Konten OEJTS berlisensi CC BY-NC-SA 4.0 (non-komersial),
+  kredit ke [Open Psychometrics](https://openpsychometrics.org/tests/OEJTS/) tampil di
+  halaman tes.
 - Docker support — `Dockerfile` + `docker-compose.yml`, lihat bagian
   [Docker](#docker) di bawah.
 
@@ -176,12 +183,16 @@ input/otorisasi, logic bisnis (scoring, publish/unpublish, dll) ada di service c
 Bagian penting:
 - `app/Models/` — `Quiz`, `Question`, `QuestionOption`, `QuizAttempt`, `QuizAnswer`, `User`
   (kolom `role` buat bedain admin/peserta).
+- `app/Models/` (Tes Kepribadian) — `Assessment`, `AssessmentQuestion`,
+  `AssessmentAttempt`, `AssessmentAnswer`; skoring ada di `app/Helper/OejtsScorer.php`,
+  deskripsi 16 tipe di `config/oejts.php`.
 - `app/Policies/` — `QuizPolicy`, `QuizAttemptPolicy`, dicek di tiap Volt component
   (`mount()` + tiap action) dan di route middleware (`admin/*` digerbang middleware `admin`).
 - `app/Services/` — `QuizService`, `QuestionService`, `QuizAttemptService` (termasuk
-  logic scoring & proteksi race condition pas submit).
+  logic scoring & proteksi race condition pas submit), plus `AssessmentService`,
+  `AssessmentQuestionService`, `AssessmentAttemptService` buat Tes Kepribadian.
 - `resources/views/livewire/` — komponen Volt, dikelompokkan per domain
-  (`admin/quizzes/*`, `quizzes/*`, `auth/*`, `settings/*`).
+  (`admin/quizzes/*`, `quizzes/*`, `admin/assessments/*`, `assessments/*`, `auth/*`, `settings/*`).
 - `resources/views/livewire/dashboard.blade.php` — dashboard beda tampilan buat admin
   (statistik & grafik) vs peserta (progress pribadi).
 

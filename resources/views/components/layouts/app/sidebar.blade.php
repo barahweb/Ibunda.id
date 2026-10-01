@@ -29,7 +29,9 @@
                 </flux:navlist.group>
 
                 <flux:navlist.group heading="Tes Kepribadian" class="grid">
-                    <flux:navlist.item icon="face-smile" :href="route('assessments.index')" :current="request()->routeIs('assessments.*')" wire:navigate>Kerjakan Tes</flux:navlist.item>
+                    <flux:navlist.item icon="face-smile" :href="route('assessments.index')" :current="request()->routeIs('assessments.index') || request()->routeIs('assessments.attempt')" wire:navigate>Kerjakan Tes</flux:navlist.item>
+
+                    <flux:navlist.item icon="clock" :href="route('assessments.history')" :current="request()->routeIs('assessments.history') || request()->routeIs('assessments.attempts.result')" wire:navigate>Riwayat Tes Saya</flux:navlist.item>
 
                     @if (auth()->user()->isAdmin())
                         <flux:navlist.item icon="clipboard-document-check" :href="route('admin.assessments.index')" :current="request()->routeIs('admin.assessments.*')" wire:navigate>Kelola Tes Kepribadian</flux:navlist.item>

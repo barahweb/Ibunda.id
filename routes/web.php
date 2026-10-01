@@ -32,7 +32,9 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('quizzes/attempts/{attempt}/result', 'quizzes.result')->name('quizzes.attempts.result');
 
     Volt::route('assessments', 'assessments.index')->name('assessments.index');
+    Volt::route('assessments/history', 'assessments.history')->name('assessments.history');
     Volt::route('assessments/{assessment}/attempt', 'assessments.attempt')->name('assessments.attempt');
+    Volt::route('assessments/attempts/{attempt}/result', 'assessments.result')->name('assessments.attempts.result');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -46,6 +48,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     Volt::route('assessments', 'admin.assessments.index')->name('assessments.index');
     Volt::route('assessments/{assessment}/questions', 'admin.assessments.questions')->name('assessments.questions');
+    Volt::route('assessments/{assessment}/submissions', 'admin.assessments.submissions')->name('assessments.submissions');
 });
 
 require __DIR__.'/auth.php';

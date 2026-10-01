@@ -98,6 +98,7 @@ new #[Layout('components.layouts.app')] class extends Component {
             <flux:heading size="lg" class="font-display">Tes Selesai</flux:heading>
             <p class="mt-2 font-display text-5xl font-extrabold tracking-widest text-accent">{{ $attempt->result_type }}</p>
             <div class="mt-6 flex justify-center gap-2">
+                <flux:button variant="primary" :href="route('assessments.attempts.result', $attempt)" wire:navigate class="transition hover:-translate-y-0.5">Lihat Detail Hasil</flux:button>
                 <flux:button :href="route('assessments.index')" wire:navigate class="transition hover:-translate-y-0.5">Kembali ke Daftar Tes</flux:button>
             </div>
         </div>

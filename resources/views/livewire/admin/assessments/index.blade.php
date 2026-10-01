@@ -162,7 +162,9 @@ new #[Layout('components.layouts.app')] class extends Component {
                                 <flux:button size="sm" variant="ghost" :href="route('admin.assessments.questions', $assessment)" wire:navigate>
                                     Pernyataan
                                 </flux:button>
-                                {{-- Tombol "Hasil" nyusul di Tahap 6 bareng halaman admin/assessments/submissions. --}}
+                                <flux:button size="sm" variant="ghost" :href="route('admin.assessments.submissions', $assessment)" wire:navigate>
+                                    Hasil
+                                </flux:button>
                                 <flux:button size="sm" variant="ghost" wire:click="togglePublish('{{ $assessment->id }}')">
                                     {{ $assessment->isPublished() ? 'Jadikan Draft' : 'Publish' }}
                                 </flux:button>
