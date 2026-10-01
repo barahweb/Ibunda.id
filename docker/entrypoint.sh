@@ -14,4 +14,8 @@ php artisan view:cache
 # route:cache sengaja dilewatin: routes/web.php ada route pakai closure ("/"),
 # dan Laravel gak bisa cache route yang isinya closure.
 
+# Perintah artisan di atas jalan sebagai root. Kembalikan kepemilikan folder yang
+# ditulis aplikasi ke www-data (user php-fpm), kalau nggak log/cache bisa gagal ditulis.
+chown -R www-data:www-data storage bootstrap/cache
+
 exec "$@"

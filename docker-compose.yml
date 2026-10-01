@@ -4,7 +4,7 @@ services:
             context: .
         restart: unless-stopped
         ports:
-            - "${APP_PORT:-8080}:80"
+            - "127.0.0.1:${APP_PORT:-8080}:80"
         env_file:
             - .env.docker
         environment:
@@ -48,11 +48,8 @@ services:
     mysql:
         image: mysql:8.0
         restart: unless-stopped
-        environment:
-            MYSQL_DATABASE: ${DB_DATABASE:-ibunda_id}
-            MYSQL_USER: ${DB_USERNAME:-ibunda_id}
-            MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
-            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
+        env_file:
+            - .env.docker
         volumes:
             - mysql-data:/var/lib/mysql
         healthcheck:
