@@ -65,14 +65,22 @@ new #[Layout('components.layouts.app')] class extends Component {
         RateLimiter::hit($this->throttleKey(), 60);
 
         foreach ($this->questions as $question) {
-            if (!in_array((string) ($this->answers[$question->id] ?? ''), ['1', '2', '3', '4', '5'], true)) {
+            $answer = $this->answers[$question->id] ?? '';
+
+            if (!is_scalar($answer) || !in_array((string) $answer, ['1', '2', '3', '4', '5'], true)) {
                 Flux::toast(text: 'Semua pernyataan harus dijawab (skala 1 sampai 5) sebelum submit.', variant: 'danger');
 
                 return;
             }
         }
 
-        $this->attempt = $assessmentAttemptService->submit($this->attempt, $this->answers);
+        try {
+            $this->attempt = $assessmentAttemptService->submit($this->attempt, $this->answers);
+        } catch (\DomainException $e) {
+            Flux::toast(text: $e->getMessage(), variant: 'danger');
+
+            return;
+        }
 
         $this->redirectRoute('assessments.attempts.result', ['attempt' => $this->attempt, 'baru' => 1], navigate: true);
     }

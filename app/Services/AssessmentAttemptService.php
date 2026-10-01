@@ -58,6 +58,8 @@ class AssessmentAttemptService
     /**
      * @param  array<string, int|string|null>  $answers  question_id => nilai Likert 1-5. Soal yang
      *                                                   gak ada di sini dinilai dari jawaban yang udah tersimpan (autosave).
+     *
+     * @throws \DomainException kalau masih ada pernyataan yang belum dijawab (nilai 1-5)
      */
     public function submit(AssessmentAttempt $attempt, array $answers): AssessmentAttempt
     {
@@ -80,16 +82,22 @@ class AssessmentAttemptService
                 // String kosong dianggap "gak dikirim", bukan "sengaja dikosongin", biar
                 // jawaban yang udah ke-autosave gak ketiban dianggap belum dijawab.
                 $submitted = $answers[$question->id] ?? null;
+                if ($submitted !== null && !is_scalar($submitted)) {
+                    throw new \DomainException('Semua pernyataan harus dijawab (skala 1 sampai 5) sebelum submit.');
+                }
+
                 $value = ($submitted !== null && $submitted !== '') ? (int) $submitted : $savedAnswers->get($question->id);
 
-                if ($value !== null && ($value < 1 || $value > 5)) {
-                    $value = null;
+                if ($value === null || $value < 1 || $value > 5) {
+                    throw new \DomainException('Semua pernyataan harus dijawab (skala 1 sampai 5) sebelum submit.');
                 }
 
                 $valuesByQuestionId[$question->id] = $value;
+            }
 
+            foreach ($valuesByQuestionId as $questionId => $value) {
                 $locked->answers()->updateOrCreate(
-                    ['assessment_question_id' => $question->id],
+                    ['assessment_question_id' => $questionId],
                     ['value' => $value],
                 );
             }

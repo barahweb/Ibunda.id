@@ -248,3 +248,16 @@ test('requesting interpretations is rate limited per user', function () {
 
     Http::assertSentCount(10);
 });
+
+test('history hides the continue link when the assessment is no longer published', function () {
+    $participant = User::factory()->create();
+    $assessment = Assessment::factory()->draft()->create(['title' => 'Tes Ditarik']);
+    AssessmentAttempt::factory()->for($assessment)->for($participant)->create();
+
+    $this->actingAs($participant)
+        ->get(route('assessments.history'))
+        ->assertOk()
+        ->assertSee('Tes Ditarik')
+        ->assertSee('Tes tidak tersedia')
+        ->assertDontSee('Lanjutkan');
+});

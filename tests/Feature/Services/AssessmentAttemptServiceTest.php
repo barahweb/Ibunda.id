@@ -165,33 +165,43 @@ test('submit credits every answer to the right dimension and stores scores that 
     expect($stored->dimension_scores['JP'])->toBe(16);
 });
 
-test('unanswered questions do not crash scoring and count as zero toward their dimension', function () {
+test('submitting with an unanswered question is refused and stores nothing', function () {
     $assessment = createPublishedAssessmentWithQuestions();
     $attempt = AssessmentAttempt::factory()->for($assessment)->create();
-    $service = app(AssessmentAttemptService::class);
+    $answers = $assessment->questions()->get()->mapWithKeys(fn ($question) => [$question->id => 3])->all();
+    array_pop($answers);
 
-    // Cuma jawab 7 dari 8 soal EI, biar sum-nya 7*1=7 bukan 8*1=8.
-    $eiQuestions = $assessment->questions()->where('dimension', 'EI')->get();
-    $answers = $eiQuestions->take(7)->mapWithKeys(fn ($question) => [$question->id => 1])->all();
+    expect(fn () => app(AssessmentAttemptService::class)->submit($attempt, $answers))
+        ->toThrow(DomainException::class, 'Semua pernyataan harus dijawab');
 
-    $result = $service->submit($attempt, $answers);
+    $stored = $attempt->fresh();
 
-    expect($result->dimension_scores['EI'])->toBe(7);
-    expect($result->answers)->toHaveCount(32);
+    expect($stored->status)->toBe(AssessmentAttempt::STATUS_IN_PROGRESS);
+    expect($stored->result_type)->toBeNull();
+    expect($stored->answers)->toHaveCount(0);
+});
+
+test('submitting with a value outside 1-5 is refused', function () {
+    $assessment = createPublishedAssessmentWithQuestions();
+    $attempt = AssessmentAttempt::factory()->for($assessment)->create();
+    $answers = $assessment->questions()->get()->mapWithKeys(fn ($question) => [$question->id => 3])->all();
+    $answers[array_key_first($answers)] = 9;
+
+    expect(fn () => app(AssessmentAttemptService::class)->submit($attempt, $answers))->toThrow(DomainException::class);
+    expect($attempt->fresh()->status)->toBe(AssessmentAttempt::STATUS_IN_PROGRESS);
 });
 
 test('submit falls back to previously autosaved answers for questions not resent', function () {
     $assessment = createPublishedAssessmentWithQuestions();
-    $question = $assessment->questions()->first();
     $attempt = AssessmentAttempt::factory()->for($assessment)->create();
     $service = app(AssessmentAttemptService::class);
 
-    $service->saveAnswer($attempt, $question->id, 5);
+    $assessment->questions()->get()->each(fn ($question) => $service->saveAnswer($attempt, $question->id, 5));
 
     $result = $service->submit($attempt, []);
 
-    $answer = $result->answers()->where('assessment_question_id', $question->id)->first();
-    expect($answer->value)->toBe(5);
+    expect($result->status)->toBe(AssessmentAttempt::STATUS_COMPLETED);
+    expect($result->answers()->where('value', 5)->count())->toBe(32);
 });
 
 test('submitting with an empty string for a question does not discard its saved answer', function () {
@@ -200,7 +210,7 @@ test('submitting with an empty string for a question does not discard its saved 
     $attempt = AssessmentAttempt::factory()->for($assessment)->create();
     $service = app(AssessmentAttemptService::class);
 
-    $service->saveAnswer($attempt, $question->id, 5);
+    $assessment->questions()->get()->each(fn ($item) => $service->saveAnswer($attempt, $item->id, 5));
     $result = $service->submit($attempt, [$question->id => '']);
 
     $answer = $result->answers()->where('assessment_question_id', $question->id)->first();

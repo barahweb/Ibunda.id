@@ -72,8 +72,10 @@ new #[Layout('components.layouts.app')] class extends Component {
                             <div class="flex justify-center">
                                 @if ($attempt->isCompleted())
                                     <flux:button size="sm" variant="ghost" :href="route('assessments.attempts.result', $attempt)" wire:navigate>Lihat Hasil</flux:button>
-                                @else
+                                @elseif (auth()->user()->can('view', $attempt->assessment))
                                     <flux:button size="sm" variant="ghost" :href="route('assessments.attempt', $attempt->assessment)" wire:navigate>Lanjutkan</flux:button>
+                                @else
+                                    <span class="text-xs text-zinc-400">Tes tidak tersedia</span>
                                 @endif
                             </div>
                         </td>
