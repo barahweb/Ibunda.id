@@ -30,6 +30,9 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('quizzes/history', 'quizzes.history')->name('quizzes.history');
     Volt::route('quizzes/{quiz}/attempt', 'quizzes.attempt')->name('quizzes.attempt');
     Volt::route('quizzes/attempts/{attempt}/result', 'quizzes.result')->name('quizzes.attempts.result');
+
+    Volt::route('assessments', 'assessments.index')->name('assessments.index');
+    Volt::route('assessments/{assessment}/attempt', 'assessments.attempt')->name('assessments.attempt');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {

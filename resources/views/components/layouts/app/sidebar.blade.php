@@ -28,11 +28,13 @@
                     @endif
                 </flux:navlist.group>
 
-                @if (auth()->user()->isAdmin())
-                    <flux:navlist.group heading="Tes Kepribadian" class="grid">
-                        <flux:navlist.item icon="face-smile" :href="route('admin.assessments.index')" :current="request()->routeIs('admin.assessments.*')" wire:navigate>Kelola Tes Kepribadian</flux:navlist.item>
-                    </flux:navlist.group>
-                @endif
+                <flux:navlist.group heading="Tes Kepribadian" class="grid">
+                    <flux:navlist.item icon="face-smile" :href="route('assessments.index')" :current="request()->routeIs('assessments.*')" wire:navigate>Kerjakan Tes</flux:navlist.item>
+
+                    @if (auth()->user()->isAdmin())
+                        <flux:navlist.item icon="clipboard-document-check" :href="route('admin.assessments.index')" :current="request()->routeIs('admin.assessments.*')" wire:navigate>Kelola Tes Kepribadian</flux:navlist.item>
+                    @endif
+                </flux:navlist.group>
             </flux:navlist>
 
             <flux:spacer />
