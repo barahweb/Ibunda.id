@@ -110,15 +110,15 @@
         <section class="border-b border-zinc-200 bg-blue-50 px-6 py-8">
             <div data-reveal class="mx-auto grid max-w-6xl grid-cols-1 gap-8 text-center sm:grid-cols-3">
                 <div>
-                    <p class="font-display text-3xl font-extrabold text-accent">{{ $availableQuizCount }}</p>
+                    <p data-count="{{ $availableQuizCount }}" class="font-display text-3xl font-extrabold text-accent">{{ $availableQuizCount }}</p>
                     <p class="mt-1 text-sm font-semibold text-zinc-600">Quiz Tersedia</p>
                 </div>
                 <div>
-                    <p class="font-display text-3xl font-extrabold text-accent">{{ $completedAttemptCount }}</p>
+                    <p data-count="{{ $completedAttemptCount }}" class="font-display text-3xl font-extrabold text-accent">{{ $completedAttemptCount }}</p>
                     <p class="mt-1 text-sm font-semibold text-zinc-600">Quiz Sudah Dikerjakan</p>
                 </div>
                 <div>
-                    <p class="font-display text-3xl font-extrabold text-accent">{{ $averageScore !== null ? round($averageScore).'%' : '—' }}</p>
+                    <p @if ($averageScore !== null) data-count="{{ round($averageScore) }}" data-suffix="%" @endif class="font-display text-3xl font-extrabold text-accent">{{ $averageScore !== null ? round($averageScore).'%' : '—' }}</p>
                     <p class="mt-1 text-sm font-semibold text-zinc-600">Rata-rata Skor</p>
                 </div>
             </div>

@@ -24,6 +24,8 @@ class AssessmentAttempt extends Model
         'status',
         'result_type',
         'dimension_scores',
+        'ai_interpretation',
+        'ai_interpreted_at',
     ];
 
     protected function casts(): array
@@ -32,6 +34,7 @@ class AssessmentAttempt extends Model
             'started_at' => 'datetime',
             'submitted_at' => 'datetime',
             'dimension_scores' => 'array',
+            'ai_interpreted_at' => 'datetime',
         ];
     }
 

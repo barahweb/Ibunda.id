@@ -2,6 +2,10 @@
 
 use App\Helper\OejtsScorer;
 use App\Models\AssessmentAttempt;
+use App\Services\AssessmentInterpretationService;
+use Flux\Flux;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
@@ -16,6 +20,37 @@ new #[Layout('components.layouts.app')] class extends Component {
         abort_unless($attempt->isCompleted(), 404);
 
         $this->attempt = $attempt;
+    }
+
+    #[Computed]
+    public function canRequestInterpretation(): bool
+    {
+        return blank($this->attempt->ai_interpretation)
+            && Auth::user()->can('interpret', $this->attempt)
+            && app(AssessmentInterpretationService::class)->isConfigured();
+    }
+
+    public function generateInterpretation(AssessmentInterpretationService $interpretationService): void
+    {
+        $this->authorize('interpret', $this->attempt);
+
+        $key = 'assessment-interpretation:'.Auth::id();
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            Flux::toast(text: 'Terlalu banyak permintaan, coba lagi nanti.', variant: 'danger');
+
+            return;
+        }
+
+        RateLimiter::hit($key, 3600);
+
+        try {
+            $interpretationService->generate($this->attempt);
+        } catch (\DomainException $e) {
+            Flux::toast(text: $e->getMessage(), variant: 'danger');
+        }
+
+        $this->attempt->refresh();
     }
 
     /**
@@ -48,6 +83,55 @@ new #[Layout('components.layouts.app')] class extends Component {
                 ];
             })
             ->all();
+    }
+
+    /**
+     * Radar 4 sumbu: tiap sumbu = huruf yang menang di dimensinya, panjangnya = seberapa kuat
+     * condongnya (0 di titik netral, penuh di skor ekstrem).
+     *
+     * @return array{polygon: string, rings: array<int, string>, axes: array<int, array{x: float, y: float, anchor: string, letter: string, label: string, strength: int}>}
+     */
+    #[Computed]
+    public function radar(): array
+    {
+        $center = 150;
+        $radius = 100;
+        $angles = [-90, 0, 90, 180];
+        $point = fn (int $index, float $fraction): array => [
+            round($center + $radius * $fraction * cos(deg2rad($angles[$index])), 1),
+            round($center + $radius * $fraction * sin(deg2rad($angles[$index])), 1),
+        ];
+        $names = ['E' => 'Extraversion', 'I' => 'Introversion', 'S' => 'Sensing', 'N' => 'Intuition', 'T' => 'Thinking', 'F' => 'Feeling', 'J' => 'Judging', 'P' => 'Perceiving'];
+
+        $axes = [];
+        $polygon = [];
+
+        foreach ($this->dimensions as $index => $row) {
+            $strength = (int) round(abs($row['percent'] - 50) * 2);
+            [$x, $y] = $point($index, max($strength, 8) / 100);
+            $polygon[] = "$x,$y";
+
+            [$labelX, $labelY] = $point($index, 1.28);
+
+            $axes[] = [
+                'x' => $labelX,
+                'y' => $labelY,
+                'anchor' => match ($index) {
+                    1 => 'start',
+                    3 => 'end',
+                    default => 'middle',
+                },
+                'letter' => $row['letter'],
+                'label' => $names[$row['letter']],
+                'strength' => $strength,
+            ];
+        }
+
+        $rings = collect([0.25, 0.5, 0.75, 1])
+            ->map(fn (float $fraction) => collect(range(0, 3))->map(fn (int $index) => implode(',', $point($index, $fraction)))->implode(' '))
+            ->all();
+
+        return ['polygon' => implode(' ', $polygon), 'rings' => $rings, 'axes' => $axes];
     }
 
     /**
@@ -232,6 +316,34 @@ new #[Layout('components.layouts.app')] class extends Component {
         </div>
     </div>
 
+    <div class="rounded-2xl border border-zinc-200 p-5 dark:border-zinc-700">
+        <flux:heading size="lg" class="font-display">Peta kepribadianmu</flux:heading>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Makin jauh dari tengah, makin kuat kecenderunganmu di sisi itu.</p>
+
+        <svg viewBox="-20 0 340 300" class="mx-auto mt-4 w-full max-w-md" role="img" aria-label="Grafik radar kecenderungan kepribadian {{ $attempt->result_type }}">
+            @foreach ($this->radar['rings'] as $ring)
+                <polygon points="{{ $ring }}" class="fill-none stroke-zinc-200 dark:stroke-zinc-700" stroke-width="1" />
+            @endforeach
+            <line x1="150" y1="50" x2="150" y2="250" class="stroke-zinc-200 dark:stroke-zinc-700" />
+            <line x1="50" y1="150" x2="250" y2="150" class="stroke-zinc-200 dark:stroke-zinc-700" />
+
+            <polygon
+                points="{{ $this->radar['polygon'] }}"
+                class="animate-radar-grow fill-accent/20 stroke-accent motion-reduce:animate-none"
+                style="transform-origin: 150px 150px; animation-delay: 700ms"
+                stroke-width="2.5"
+                stroke-linejoin="round"
+            />
+
+            @foreach ($this->radar['axes'] as $axis)
+                <text x="{{ $axis['x'] }}" y="{{ $axis['y'] }}" text-anchor="{{ $axis['anchor'] }}" class="fill-zinc-700 text-[13px] font-semibold dark:fill-zinc-200">
+                    {{ $axis['letter'] }} &middot; {{ $axis['label'] }}
+                    <tspan x="{{ $axis['x'] }}" dy="15" class="fill-zinc-400 text-[11px] font-normal">{{ $axis['strength'] }}%</tspan>
+                </text>
+            @endforeach
+        </svg>
+    </div>
+
     <div class="flex flex-col gap-4 rounded-2xl border border-zinc-200 p-5 dark:border-zinc-700">
         <flux:heading size="lg" class="font-display">Kecenderungan per dimensi</flux:heading>
 
@@ -252,6 +364,28 @@ new #[Layout('components.layouts.app')] class extends Component {
             </div>
         @endforeach
     </div>
+
+    @if ($attempt->ai_interpretation || $this->canRequestInterpretation)
+        <div class="rounded-2xl border border-zinc-200 p-5 dark:border-zinc-700">
+            <div class="flex items-center gap-2">
+                <flux:icon.sparkles class="size-5 text-accent" />
+                <flux:heading size="lg" class="font-display">Interpretasi AI</flux:heading>
+            </div>
+
+            @if ($attempt->ai_interpretation)
+                <p class="mt-3 whitespace-pre-line text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{{ $attempt->ai_interpretation }}</p>
+            @else
+                <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Dapatkan penjelasan personal dari skor 4 dimensimu. Hanya tipe dan skor yang dikirim ke layanan AI, tanpa nama atau emailmu.</p>
+
+                <flux:button variant="primary" icon="sparkles" wire:click="generateInterpretation" wire:loading.attr="disabled" wire:target="generateInterpretation" class="mt-4 transition hover:-translate-y-0.5">
+                    <span wire:loading.remove wire:target="generateInterpretation">Buat Interpretasi AI</span>
+                    <span wire:loading wire:target="generateInterpretation">Sedang menulis...</span>
+                </flux:button>
+            @endif
+
+            <p class="mt-3 text-xs text-zinc-400">Dibuat oleh AI dari skor tesmu. Ini bahan refleksi diri, bukan diagnosis psikologis.</p>
+        </div>
+    @endif
 
     <x-oejts-attribution />
 </div>

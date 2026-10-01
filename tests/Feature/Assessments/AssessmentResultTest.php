@@ -5,7 +5,10 @@ use App\Models\AssessmentAnswer;
 use App\Models\AssessmentAttempt;
 use App\Models\AssessmentQuestion;
 use App\Models\User;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
+use Livewire\Volt\Volt;
 
 function completedAssessmentAttempt(User $user, string $type = 'INTJ', ?array $scores = null): AssessmentAttempt
 {
@@ -169,4 +172,79 @@ test('the result page offers a card download and only celebrates right after sub
 
     $this->get(route('assessments.attempts.result', ['attempt' => $attempt, 'baru' => 1]))
         ->assertSee('celebrate: true', false);
+});
+
+test('the radar chart shows the winning letter of each dimension with its strength', function () {
+    $participant = User::factory()->create();
+    $attempt = completedAssessmentAttempt($participant, 'ISTJ', ['EI' => 40, 'SN' => 8, 'TF' => 24, 'JP' => 8]);
+
+    $this->actingAs($participant)
+        ->get(route('assessments.attempts.result', $attempt))
+        ->assertOk()
+        ->assertSee('Grafik radar kecenderungan kepribadian ISTJ')
+        ->assertSee('I &middot; Introversion', false)
+        ->assertSee('S &middot; Sensing', false)
+        ->assertSee('100%')
+        ->assertSee('0%');
+});
+
+test('the owner can request an AI interpretation from the result page', function () {
+    config(['services.ai.provider' => 'gemini', 'services.gemini.key' => 'test-key']);
+    Http::fake(['generativelanguage.googleapis.com/*' => Http::response(['candidates' => [['content' => ['parts' => [['text' => 'Kamu suka rencana matang.']]]]]])]);
+    $participant = User::factory()->create();
+    $attempt = completedAssessmentAttempt($participant, 'INTJ', ['EI' => 30, 'SN' => 30, 'TF' => 10, 'JP' => 10]);
+    $this->actingAs($participant);
+
+    Volt::test('assessments.result', ['attempt' => $attempt])
+        ->assertSee('Buat Interpretasi AI')
+        ->call('generateInterpretation')
+        ->assertSee('Kamu suka rencana matang.')
+        ->assertDontSee('Buat Interpretasi AI');
+
+    expect($attempt->fresh()->ai_interpretation)->toBe('Kamu suka rencana matang.');
+});
+
+test('the button is hidden when the API is not configured', function () {
+    config(['services.ai.provider' => 'gemini', 'services.gemini.key' => null]);
+    $participant = User::factory()->create();
+    $attempt = completedAssessmentAttempt($participant, 'INTJ', ['EI' => 30, 'SN' => 30, 'TF' => 10, 'JP' => 10]);
+
+    $this->actingAs($participant)
+        ->get(route('assessments.attempts.result', $attempt))
+        ->assertOk()
+        ->assertDontSee('Interpretasi AI');
+});
+
+test('an admin sees an existing interpretation but cannot generate one for someone else', function () {
+    config(['services.ai.provider' => 'gemini', 'services.gemini.key' => 'test-key']);
+    Http::fake();
+    $owner = User::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $withText = completedAssessmentAttempt($owner, 'INTJ', ['EI' => 30, 'SN' => 30, 'TF' => 10, 'JP' => 10]);
+    $withText->forceFill(['ai_interpretation' => 'Teks tersimpan.'])->save();
+    $without = completedAssessmentAttempt($owner, 'ENTP', ['EI' => 10, 'SN' => 30, 'TF' => 10, 'JP' => 30]);
+    $this->actingAs($admin);
+
+    $this->get(route('assessments.attempts.result', $withText))->assertSee('Teks tersimpan.');
+    $this->get(route('assessments.attempts.result', $without))->assertDontSee('Buat Interpretasi AI');
+
+    Volt::test('assessments.result', ['attempt' => $without])->call('generateInterpretation')->assertForbidden();
+    Http::assertNothingSent();
+});
+
+test('requesting interpretations is rate limited per user', function () {
+    config(['services.ai.provider' => 'gemini', 'services.gemini.key' => 'test-key']);
+    Sleep::fake();
+    Http::fake(['generativelanguage.googleapis.com/*' => Http::response([], 500)]);
+    $participant = User::factory()->create();
+    $attempt = completedAssessmentAttempt($participant, 'INTJ', ['EI' => 30, 'SN' => 30, 'TF' => 10, 'JP' => 10]);
+    $this->actingAs($participant);
+
+    $component = Volt::test('assessments.result', ['attempt' => $attempt]);
+
+    for ($i = 0; $i < 7; $i++) {
+        $component->call('generateInterpretation');
+    }
+
+    Http::assertSentCount(10);
 });

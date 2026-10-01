@@ -24,6 +24,15 @@ class AssessmentAttemptPolicy
     }
 
     /**
+     * Cuma pemilik yang boleh minta interpretasi AI (tiap permintaan makan biaya API),
+     * admin cukup bisa melihat hasil yang sudah ada.
+     */
+    public function interpret(User $user, AssessmentAttempt $assessmentAttempt): bool
+    {
+        return $assessmentAttempt->user_id === $user->id;
+    }
+
+    /**
      * Determine whether the user can create models.
      */
     public function create(User $user): bool

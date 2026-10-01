@@ -37,7 +37,11 @@ Livewire (Volt), dan Flux UI. Ada dua peran: **Admin** yang bikin & kelola quiz,
   (misal INTJ) plus skor per dimensi. Admin kelola pernyataan lewat
   `/admin/assessments` (publish butuh pas 32 pernyataan, 8 per dimensi), peserta lihat
   hasil dan riwayatnya sendiri. Halaman hasil beranimasi (huruf tipe muncul bertahap,
-  confetti pas baru selesai) dan bisa diunduh jadi kartu PNG. Konten OEJTS berlisensi CC BY-NC-SA 4.0 (non-komersial),
+  confetti pas baru selesai) dan bisa diunduh jadi kartu PNG. Peserta juga bisa minta Interpretasi AI (opsional, aktif kalau
+  `GEMINI_API_KEY` diisi di file env aplikasi; tier gratis Google Gemini cukup. Bisa
+  pindah ke Anthropic dengan `AI_PROVIDER=anthropic` + `ANTHROPIC_API_KEY`): hanya tipe dan skor yang dikirim, tanpa
+  nama atau email, dibuat sekali per hasil lalu disimpan, dibatasi 5 permintaan per jam
+  per user. Konten OEJTS berlisensi CC BY-NC-SA 4.0 (non-komersial),
   kredit ke [Open Psychometrics](https://openpsychometrics.org/tests/OEJTS/) tampil di
   halaman tes.
 - Docker support — `Dockerfile` + `docker-compose.yml`, lihat bagian

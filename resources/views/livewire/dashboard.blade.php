@@ -144,21 +144,21 @@ new #[Layout('components.layouts.app')] class extends Component {
                 <div class="flex size-10 items-center justify-center rounded-xl bg-blue-100 text-accent dark:bg-blue-950">
                     <flux:icon.clipboard-document-list class="size-5" />
                 </div>
-                <p class="mt-4 font-display text-2xl font-extrabold text-zinc-900 dark:text-white">{{ $this->adminStats['total_quizzes'] }}</p>
+                <p data-count="{{ $this->adminStats['total_quizzes'] }}" class="mt-4 font-display text-2xl font-extrabold text-zinc-900 dark:text-white">{{ $this->adminStats['total_quizzes'] }}</p>
                 <p class="mt-0.5 text-sm font-semibold text-zinc-500 dark:text-zinc-400">Total Quiz</p>
             </div>
             <div class="rounded-2xl border border-zinc-200 p-5 transition duration-200 hover:-translate-y-1 hover:shadow-lg dark:border-zinc-700">
                 <div class="flex size-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950">
                     <flux:icon.check-circle class="size-5" />
                 </div>
-                <p class="mt-4 font-display text-2xl font-extrabold text-zinc-900 dark:text-white">{{ $this->adminStats['published_quizzes'] }}</p>
+                <p data-count="{{ $this->adminStats['published_quizzes'] }}" class="mt-4 font-display text-2xl font-extrabold text-zinc-900 dark:text-white">{{ $this->adminStats['published_quizzes'] }}</p>
                 <p class="mt-0.5 text-sm font-semibold text-zinc-500 dark:text-zinc-400">Published</p>
             </div>
             <div class="rounded-2xl border border-zinc-200 p-5 transition duration-200 hover:-translate-y-1 hover:shadow-lg dark:border-zinc-700">
                 <div class="flex size-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-950">
                     <flux:icon.chart-bar class="size-5" />
                 </div>
-                <p class="mt-4 font-display text-2xl font-extrabold text-zinc-900 dark:text-white">{{ $this->adminStats['total_submissions'] }}</p>
+                <p data-count="{{ $this->adminStats['total_submissions'] }}" class="mt-4 font-display text-2xl font-extrabold text-zinc-900 dark:text-white">{{ $this->adminStats['total_submissions'] }}</p>
                 <p class="mt-0.5 text-sm font-semibold text-zinc-500 dark:text-zinc-400">Total Submission</p>
             </div>
         </div>
@@ -336,21 +336,24 @@ new #[Layout('components.layouts.app')] class extends Component {
                 <div class="flex size-10 items-center justify-center rounded-xl bg-blue-100 text-accent dark:bg-blue-950">
                     <flux:icon.clipboard-document-list class="size-5" />
                 </div>
-                <p class="mt-4 font-display text-2xl font-extrabold text-zinc-900 dark:text-white">{{ $this->participantStats['available_quizzes'] }}</p>
+                <p data-count="{{ $this->participantStats['available_quizzes'] }}" class="mt-4 font-display text-2xl font-extrabold text-zinc-900 dark:text-white">{{ $this->participantStats['available_quizzes'] }}</p>
                 <p class="mt-0.5 text-sm font-semibold text-zinc-500 dark:text-zinc-400">Quiz Tersedia</p>
             </div>
             <div class="rounded-2xl border border-zinc-200 p-5 transition duration-200 hover:-translate-y-1 hover:shadow-lg dark:border-zinc-700">
                 <div class="flex size-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950">
                     <flux:icon.check-circle class="size-5" />
                 </div>
-                <p class="mt-4 font-display text-2xl font-extrabold text-zinc-900 dark:text-white">{{ $this->participantStats['completed_attempts'] }}</p>
+                <p data-count="{{ $this->participantStats['completed_attempts'] }}" class="mt-4 font-display text-2xl font-extrabold text-zinc-900 dark:text-white">{{ $this->participantStats['completed_attempts'] }}</p>
                 <p class="mt-0.5 text-sm font-semibold text-zinc-500 dark:text-zinc-400">Sudah Dikerjakan</p>
             </div>
             <div class="animate-soft-pulse rounded-2xl border border-zinc-200 p-5 transition duration-200 hover:-translate-y-1 hover:shadow-lg dark:border-zinc-700">
                 <div class="flex size-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-950">
                     <flux:icon.chart-bar class="size-5" />
                 </div>
-                <p class="mt-4 font-display text-2xl font-extrabold text-zinc-900 dark:text-white">
+                <p
+                    @if ($this->participantStats['average_score'] !== null) data-count="{{ round($this->participantStats['average_score']) }}" data-suffix="%" @endif
+                    class="mt-4 font-display text-2xl font-extrabold text-zinc-900 dark:text-white"
+                >
                     {{ $this->participantStats['average_score'] !== null ? round($this->participantStats['average_score']).'%' : '—' }}
                 </p>
                 <p class="mt-0.5 text-sm font-semibold text-zinc-500 dark:text-zinc-400">Rata-rata Skor</p>
