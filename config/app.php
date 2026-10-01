@@ -17,6 +17,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Seed Data Demo di Production
+    |--------------------------------------------------------------------------
+    |
+    | Seeder bikin akun contoh berpassword "password". Di production itu berbahaya,
+    | jadi DatabaseSeeder melewatinya kecuali SEED_DEMO_DATA=true (misal buat situs demo).
+    |
+    */
+
+    /*
+    |--------------------------------------------------------------------------
+    | Trusted Proxies
+    |--------------------------------------------------------------------------
+    |
+    | "*" atau daftar IP proxy dipisah koma. Kosong = tidak ada proxy yang dipercaya.
+    |
+    */
+
+    'trusted_proxies' => env('TRUSTED_PROXIES'),
+
+    'seed_demo_data' => (bool) env('SEED_DEMO_DATA', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

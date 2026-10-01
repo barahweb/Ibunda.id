@@ -54,14 +54,17 @@ class QuizSeeder extends Seeder
      */
     private function seedQuiz(User $creator, string $title, string $description, int $passingScore, ?int $timeLimitMinutes, array $questions): void
     {
-        $quiz = Quiz::create([
-            'created_by' => $creator->id,
+        // created_by sengaja gak masuk $fillable (gak boleh diisi dari input user), jadi diisi
+        // langsung, sama kayak QuizService::create().
+        $quiz = new Quiz([
             'title' => $title,
             'description' => $description,
             'status' => Quiz::STATUS_PUBLISHED,
             'passing_score' => $passingScore,
             'time_limit_minutes' => $timeLimitMinutes,
         ]);
+        $quiz->created_by = $creator->id;
+        $quiz->save();
 
         foreach ($questions as $order => [$text, $options, $correctIndex]) {
             $question = $quiz->questions()->create([

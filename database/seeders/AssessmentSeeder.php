@@ -21,12 +21,14 @@ class AssessmentSeeder extends Seeder
             return;
         }
 
-        $assessment = Assessment::create([
-            'created_by' => $admin->id,
+        // created_by sengaja gak masuk $fillable, jadi diisi langsung (sama kayak AssessmentService::create()).
+        $assessment = new Assessment([
             'title' => 'Tes Kepribadian (OEJTS)',
             'description' => 'Pilih sisi yang paling menggambarkan dirimu di tiap pasang pernyataan. Tidak ada jawaban benar atau salah.',
             'status' => Assessment::STATUS_DRAFT,
         ]);
+        $assessment->created_by = $admin->id;
+        $assessment->save();
 
         foreach ($this->statements() as $order => [$dimension, $left, $right]) {
             $assessment->questions()->create([

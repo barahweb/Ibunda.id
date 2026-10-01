@@ -13,7 +13,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        if (app()->isProduction() && !config('app.seed_demo_data')) {
+            $this->command?->warn('Seed data demo dilewati di production (akun contoh berpassword "password"). Buat admin dengan: php artisan app:create-admin. Set SEED_DEMO_DATA=true kalau memang mau.');
+
+            return;
+        }
 
         User::factory()->admin()->create([
             'name' => 'Admin',
