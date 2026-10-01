@@ -15,6 +15,9 @@
     --animate-blob-drift: blob-drift 9s ease-in-out infinite;
     --animate-gentle-bounce: gentle-bounce 3.4s ease-in-out infinite;
     --animate-soft-pulse: soft-pulse 2.6s ease-in-out infinite;
+    --animate-letter-pop: letter-pop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    --animate-fade-up: fade-up 0.7s ease-out both;
+    --animate-marker-slide: marker-slide 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
 
     --color-zinc-50: #fafafa;
     --color-zinc-100: #f5f5f5;
@@ -65,6 +68,20 @@
 @keyframes soft-pulse {
     0%, 100% { box-shadow: 0 0 0 0 rgb(37 99 235 / 0.25); }
     50% { box-shadow: 0 0 0 10px rgb(37 99 235 / 0); }
+}
+
+@keyframes letter-pop {
+    from { opacity: 0; transform: translateY(1.5rem) scale(0.4); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes fade-up {
+    from { opacity: 0; transform: translateY(0.75rem); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes marker-slide {
+    from { left: 50%; }
 }
 
 [data-flux-field] {

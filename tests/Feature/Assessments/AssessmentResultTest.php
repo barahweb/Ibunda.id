@@ -155,3 +155,18 @@ test('scores outside the normal 8-40 range still render without breaking the bar
         ->assertSee('left: 0%')
         ->assertSee('left: 100%');
 });
+
+test('the result page offers a card download and only celebrates right after submitting', function () {
+    $participant = User::factory()->create();
+    $attempt = completedAssessmentAttempt($participant, 'INTJ', ['EI' => 30, 'SN' => 30, 'TF' => 10, 'JP' => 10]);
+    $this->actingAs($participant);
+
+    $this->get(route('assessments.attempts.result', $attempt))
+        ->assertOk()
+        ->assertSee('Unduh Kartu Hasil')
+        ->assertSee('hasil-tes-kepribadian-intj.png', false)
+        ->assertSee('celebrate: false', false);
+
+    $this->get(route('assessments.attempts.result', ['attempt' => $attempt, 'baru' => 1]))
+        ->assertSee('celebrate: true', false);
+});

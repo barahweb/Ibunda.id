@@ -36,7 +36,8 @@ Livewire (Volt), dan Flux UI. Ada dua peran: **Admin** yang bikin & kelola quiz,
   Indonesia dari Open Extended Jungian Type Scales), hasilnya kode 4 huruf ala MBTI
   (misal INTJ) plus skor per dimensi. Admin kelola pernyataan lewat
   `/admin/assessments` (publish butuh pas 32 pernyataan, 8 per dimensi), peserta lihat
-  hasil dan riwayatnya sendiri. Konten OEJTS berlisensi CC BY-NC-SA 4.0 (non-komersial),
+  hasil dan riwayatnya sendiri. Halaman hasil beranimasi (huruf tipe muncul bertahap,
+  confetti pas baru selesai) dan bisa diunduh jadi kartu PNG. Konten OEJTS berlisensi CC BY-NC-SA 4.0 (non-komersial),
   kredit ke [Open Psychometrics](https://openpsychometrics.org/tests/OEJTS/) tampil di
   halaman tes.
 - Docker support — `Dockerfile` + `docker-compose.yml`, lihat bagian

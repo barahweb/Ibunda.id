@@ -73,6 +73,8 @@ new #[Layout('components.layouts.app')] class extends Component {
         }
 
         $this->attempt = $assessmentAttemptService->submit($this->attempt, $this->answers);
+
+        $this->redirectRoute('assessments.attempts.result', ['attempt' => $this->attempt, 'baru' => 1], navigate: true);
     }
 
     protected function throttleKey(): string

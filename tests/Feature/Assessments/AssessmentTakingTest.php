@@ -125,8 +125,7 @@ test('submitting every statement completes the attempt with a result type', func
     Volt::test('assessments.attempt', ['assessment' => $assessment])
         ->set('answers', allAnswers($assessment, 5))
         ->call('submit')
-        ->assertSee('Tes Selesai')
-        ->assertSee('INFP');
+        ->assertRedirect(route('assessments.attempts.result', ['attempt' => AssessmentAttempt::first(), 'baru' => 1]));
 
     $attempt = AssessmentAttempt::first();
 
