@@ -58,7 +58,12 @@ class AssessmentService
      */
     private function assertReadyToPublish(Assessment $assessment): void
     {
+        // reorder() buang ORDER BY order bawaan relasi questions(), soalnya kalau nggak,
+        // GROUP BY dimension konflik sama ORDER BY order di MySQL strict mode
+        // (ONLY_FULL_GROUP_BY). SQLite (DB test) gak strict soal ini, jadi baru ketauan
+        // pas dicoba manual ke MySQL beneran, bukan lewat test suite.
         $counts = $assessment->questions()
+            ->reorder()
             ->selectRaw('dimension, count(*) as total')
             ->groupBy('dimension')
             ->get()

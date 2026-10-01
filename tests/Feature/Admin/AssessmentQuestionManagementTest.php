@@ -84,6 +84,38 @@ test('admin can edit a question', function () {
     expect($question->refresh()->statement_left)->toBe('Baru');
 });
 
+test('creating a question is blocked via the form when the assessment is published', function () {
+    $admin = User::factory()->admin()->create();
+    $assessment = Assessment::factory()->for($admin, 'creator')->published()->create();
+    $before = $assessment->questions()->count();
+    $this->actingAs($admin);
+
+    Volt::test('admin.assessments.questions', ['assessment' => $assessment])
+        ->call('createQuestion')
+        ->set('dimension', 'EI')
+        ->set('statementLeft', 'Kiri')
+        ->set('statementRight', 'Kanan')
+        ->call('save')
+        ->assertDispatched('toast-show');
+
+    expect($assessment->questions()->count())->toBe($before);
+});
+
+test('editing a question is blocked via the form when the assessment is published', function () {
+    $admin = User::factory()->admin()->create();
+    $assessment = Assessment::factory()->for($admin, 'creator')->published()->create();
+    $question = AssessmentQuestion::factory()->for($assessment)->dimension('EI')->create(['statement_left' => 'Asli']);
+    $this->actingAs($admin);
+
+    Volt::test('admin.assessments.questions', ['assessment' => $assessment])
+        ->call('editQuestion', $question->id)
+        ->set('statementLeft', 'Diubah')
+        ->call('save')
+        ->assertDispatched('toast-show');
+
+    expect($question->refresh()->statement_left)->toBe('Asli');
+});
+
 test('admin can delete a question from a draft assessment', function () {
     $admin = User::factory()->admin()->create();
     $assessment = Assessment::factory()->for($admin, 'creator')->draft()->create();
@@ -106,6 +138,24 @@ test('a question cannot be deleted while the assessment is published', function 
         ->assertDispatched('toast-show');
 
     expect(AssessmentQuestion::find($question->id))->not->toBeNull();
+});
+
+test('a question from another assessment cannot be edited, deleted, or moved through this assessment page', function () {
+    $admin = User::factory()->admin()->create();
+    $assessment = Assessment::factory()->for($admin, 'creator')->draft()->create();
+    $otherAssessment = Assessment::factory()->for($admin, 'creator')->draft()->create();
+    $foreign = AssessmentQuestion::factory()->for($otherAssessment)->create(['statement_left' => 'Punya assessment lain', 'order' => 0]);
+    $this->actingAs($admin);
+
+    // Komponen baru tiap panggilan: setelah 1 request 404, instance-nya gak punya snapshot valid lagi.
+    foreach (['editQuestion', 'deleteQuestion', 'moveDown'] as $action) {
+        Volt::test('admin.assessments.questions', ['assessment' => $assessment])
+            ->call($action, $foreign->id)
+            ->assertNotFound();
+    }
+
+    expect($foreign->fresh()->statement_left)->toBe('Punya assessment lain');
+    expect(AssessmentQuestion::find($foreign->id))->not->toBeNull();
 });
 
 test('admin can reorder questions', function () {

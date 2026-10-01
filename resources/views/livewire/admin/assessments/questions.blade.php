@@ -82,11 +82,17 @@ new #[Layout('components.layouts.app')] class extends Component {
             'statement_right' => $validated['statementRight'],
         ];
 
-        if ($this->editingQuestionId) {
-            $question = $this->assessment->questions()->findOrFail($this->editingQuestionId);
-            $assessmentQuestionService->update($question, $data);
-        } else {
-            $assessmentQuestionService->create($this->assessment, $data);
+        try {
+            if ($this->editingQuestionId) {
+                $question = $this->assessment->questions()->findOrFail($this->editingQuestionId);
+                $assessmentQuestionService->update($question, $data);
+            } else {
+                $assessmentQuestionService->create($this->assessment, $data);
+            }
+        } catch (\DomainException $e) {
+            Flux::toast(text: $e->getMessage(), variant: 'danger');
+
+            return;
         }
 
         unset($this->questions, $this->dimensionCounts);

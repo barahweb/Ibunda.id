@@ -77,7 +77,7 @@ class QuizAttemptService
             $earnedPoints = 0;
 
             foreach ($locked->quiz->questions()->with('options')->get() as $question) {
-                // String kosong dianggap "gak dikirim", bukan "sengaja dikosongin" — biar
+                // String kosong dianggap "gak dikirim", bukan "sengaja dikosongin", biar
                 // jawaban yang udah ke-autosave gak ketiban dianggap belum dijawab.
                 $submitted = $answers[$question->id] ?? null;
                 $selectedOptionId = ($submitted !== null && $submitted !== '') ? $submitted : $savedAnswers->get($question->id);

@@ -130,6 +130,41 @@ test('submitting all extreme-high answers scores INFP', function () {
     expect($result->dimension_scores)->toBe(['EI' => 40, 'SN' => 40, 'TF' => 40, 'JP' => 40]);
 });
 
+test('submit credits every answer to the right dimension and stores scores that survive a reload', function () {
+    $assessment = createPublishedAssessmentWithQuestions();
+    $attempt = AssessmentAttempt::factory()->for($assessment)->create();
+    $service = app(AssessmentAttemptService::class);
+
+    $patterns = [
+        'EI' => [5, 5, 5, 5, 1, 1, 1, 1], // 24 -> I
+        'SN' => [1, 1, 1, 1, 5, 5, 5, 4], // 23 -> S
+        'TF' => [3, 3, 3, 3, 3, 3, 3, 3], // 24 -> F
+        'JP' => [2, 2, 2, 2, 2, 2, 2, 2], // 16 -> J
+    ];
+
+    $answers = [];
+
+    foreach ($patterns as $dimension => $pattern) {
+        $questions = $assessment->questions()->where('dimension', $dimension)->get()->values();
+
+        foreach ($pattern as $index => $value) {
+            $answers[$questions[$index]->id] = $value;
+        }
+    }
+
+    $service->submit($attempt, $answers);
+
+    // Dibaca ulang dari DB. MySQL nyimpen JSON dengan urutan key yang diurutin ulang
+    // (EI, JP, SN, TF), jadi dicek per key, bukan per urutan.
+    $stored = AssessmentAttempt::find($attempt->id);
+
+    expect($stored->result_type)->toBe('ISFJ');
+    expect($stored->dimension_scores['EI'])->toBe(24);
+    expect($stored->dimension_scores['SN'])->toBe(23);
+    expect($stored->dimension_scores['TF'])->toBe(24);
+    expect($stored->dimension_scores['JP'])->toBe(16);
+});
+
 test('unanswered questions do not crash scoring and count as zero toward their dimension', function () {
     $assessment = createPublishedAssessmentWithQuestions();
     $attempt = AssessmentAttempt::factory()->for($assessment)->create();
