@@ -70,6 +70,54 @@
     50% { box-shadow: 0 0 0 10px rgb(37 99 235 / 0); }
 }
 
+html {
+    scroll-padding-top: 5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+@keyframes page-in {
+    from { opacity: 0; transform: translateY(0.75rem); }
+}
+
+.page-enter > * > * {
+    animation: page-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.page-enter > * > :nth-child(2) { animation-delay: 70ms; }
+.page-enter > * > :nth-child(3) { animation-delay: 140ms; }
+.page-enter > * > :nth-child(4) { animation-delay: 210ms; }
+.page-enter > * > :nth-child(5) { animation-delay: 280ms; }
+.page-enter > * > :nth-child(n+6) { animation-delay: 350ms; }
+
+.reveal {
+    opacity: 0;
+    transform: translateY(1.5rem);
+    transition: opacity 0.7s ease-out, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal.is-visible {
+    opacity: 1;
+    transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .page-enter > * > * {
+        animation: none;
+    }
+
+    .reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}
+
 @keyframes letter-pop {
     from { opacity: 0; transform: translateY(1.5rem) scale(0.4); }
     to { opacity: 1; transform: translateY(0) scale(1); }

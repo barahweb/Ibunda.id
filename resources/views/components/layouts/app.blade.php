@@ -1,5 +1,5 @@
 <x-layouts.app.sidebar>
-    <flux:main>
+    <flux:main class="page-enter">
         {{ $slot }}
     </flux:main>
 </x-layouts.app.sidebar>
