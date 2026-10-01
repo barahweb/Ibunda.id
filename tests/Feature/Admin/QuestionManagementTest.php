@@ -6,6 +6,7 @@ use App\Models\Quiz;
 use App\Models\QuizAnswer;
 use App\Models\QuizAttempt;
 use App\Models\User;
+use App\Services\QuestionService;
 use Livewire\Volt\Volt;
 
 test('guest is redirected to login', function () {
@@ -207,4 +208,23 @@ test('admin can reorder questions', function () {
 
     expect($first->refresh()->order)->toBe(1);
     expect($second->refresh()->order)->toBe(0);
+});
+
+test('a new question gets a unique order even after a middle question was deleted', function () {
+    $quiz = Quiz::factory()->create();
+    $service = app(QuestionService::class);
+    $payload = fn (string $text) => ['question_text' => $text, 'points' => 1, 'options' => ['A', 'B'], 'correct_index' => 0];
+
+    $first = $service->create($quiz, $payload('Satu'));
+    $second = $service->create($quiz, $payload('Dua'));
+    $third = $service->create($quiz, $payload('Tiga'));
+
+    $service->delete($second);
+    $fourth = $service->create($quiz, $payload('Empat'));
+
+    $orders = $quiz->questions()->pluck('order');
+
+    expect($orders)->toHaveCount(3);
+    expect($orders->unique())->toHaveCount(3);
+    expect($fourth->order)->toBeGreaterThan($third->order);
 });

@@ -14,10 +14,14 @@ class QuestionService
     public function create(Quiz $quiz, array $data): Question
     {
         return DB::transaction(function () use ($quiz, $data) {
+            // max()+1, bukan count(): setelah soal di tengah dihapus, count() bakal sama
+            // dengan order soal terakhir yang masih ada dan urutannya jadi dobel.
+            $lastOrder = $quiz->questions()->reorder()->max('order');
+
             $question = $quiz->questions()->create([
                 'question_text' => $data['question_text'],
                 'points' => $data['points'],
-                'order' => $quiz->questions()->count(),
+                'order' => $lastOrder === null ? 0 : ((int) $lastOrder) + 1,
             ]);
 
             $this->syncOptions($question, $data['options'], $data['correct_index']);
