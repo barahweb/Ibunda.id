@@ -54,6 +54,21 @@
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
     }
+
+    /* Tailwind v4 bikin kursor tombol jadi panah biasa, balikin jadi tangan penunjuk. */
+    button:not(:disabled),
+    [role='button']:not([aria-disabled='true']),
+    summary,
+    select:not(:disabled),
+    label[for],
+    input:is([type='checkbox'], [type='radio'], [type='submit'], [type='button'], [type='file']):not(:disabled) {
+        cursor: pointer;
+    }
+
+    button:disabled,
+    [aria-disabled='true'] {
+        cursor: not-allowed;
+    }
 }
 
 @keyframes blob-drift {
