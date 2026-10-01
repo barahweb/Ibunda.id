@@ -19,7 +19,8 @@ Livewire (Volt), dan Flux UI. Ada dua peran: **Admin** yang bikin & kelola quiz,
 - Responsive UI — semua halaman jalan di layar mobile sampai desktop.
 
 **Bonus yang udah dikerjain:**
-- Auth lengkap (login, daftar, lupa password, verifikasi email).
+- Auth lengkap (login, daftar, lupa password). Halaman verifikasi email ada, tapi
+  belum diwajibkan: user baru langsung bisa login tanpa verifikasi.
 - Role & Permission (`admin` / `participant`) pakai Laravel Policy.
 - Service layer (`app/Services/*`) buat pisahin logic bisnis dari komponen Livewire.
 - Testing pakai Pest (lihat `tests/`).
@@ -49,10 +50,10 @@ Livewire (Volt), dan Flux UI. Ada dua peran: **Admin** yang bikin & kelola quiz,
 
 ## Tech Stack
 
-- **Backend:** Laravel 12, PHP 8.4
-- **Frontend:** Livewire 3 (Volt class-based component), Flux UI, Tailwind CSS v4
-- **Testing:** Pest v3
-- **Database:** SQLite (default), gampang diganti ke MySQL/PostgreSQL
+- **Backend:** Laravel 12, PHP 8.2 atau lebih baru
+- **Frontend:** Livewire 4 (Volt class-based component), Flux UI, Tailwind CSS v4
+- **Testing:** Pest v3 (jalan di SQLite in-memory, sudah dicoba juga di MySQL)
+- **Database:** MySQL (dev dan production), SQLite buat test
 
 ## Instalasi
 
@@ -150,12 +151,18 @@ serve web, `scheduler`, `queue`), plus container `mysql` terpisah.
    docker compose up -d
    ```
    Migration jalan otomatis pas container `app` start (lihat `docker/entrypoint.sh`).
-   Buat seed data contoh, jalanin manual sekali:
+   Buat akun admin pertama (akan ditanya nama, email, password):
    ```bash
-   docker compose exec app php artisan db:seed
+   docker compose exec app php artisan app:create-admin
    ```
+   Cuma buat nyoba lokal, kalau mau data contoh (akun berpassword `password` + quiz +
+   tes kepribadian), isi `SEED_DEMO_DATA=true` di `.env.docker`, restart container,
+   lalu jalanin `docker compose exec app php artisan db:seed --force`. Jangan lakukan ini
+   di server publik.
 4. Buka `http://localhost:8080` (atau ganti `APP_PORT` di `.env.docker` kalau port
-   8080 udah kepake).
+   8080 udah kepake). Port ini sengaja cuma kebuka di `127.0.0.1` (komputer itu
+   sendiri), jadi di server aslinya dipasang reverse proxy HTTPS di depannya, lihat
+   [Deploy ke Production](#deploy-ke-production).
 
 Catatan:
 - `.env.docker` **terpisah** dari `.env` biasa (buat development lokal/Herd) — isinya
@@ -166,6 +173,240 @@ Catatan:
   ada Docker terinstall di situ) — udah saya cek manual tiap file-nya (Dockerfile,
   nginx.conf, entrypoint.sh) sebaik mungkin, tapi tolong dicoba sendiri dan kasih tau
   kalau ada yang error.
+
+## Deploy ke Production
+
+Panduan ini ngejelasin dua cara naruh aplikasi ini di internet tanpa Laravel Cloud.
+Pilih satu:
+
+| | **A. VPS + Docker** (disarankan) | **B. Shared hosting (cPanel)** |
+|---|---|---|
+| Biaya kasar | VPS kecil, sekitar $4-6/bulan | Paket hosting biasa, sering lebih murah |
+| Cocok kalau | Mau semua fitur jalan penuh | Cuma punya hosting biasa |
+| Scheduler & queue | Otomatis (container `scheduler` dan `queue`) | Lewat cron, queue dibuat `sync` |
+| Susah-gampang | Perlu sedikit akrab terminal/SSH | Klik-klik di cPanel + upload |
+
+Apa pun pilihannya, baca dulu [Checklist sebelum deploy](#checklist-sebelum-deploy) dan
+[Konfigurasi environment production](#konfigurasi-environment-production).
+
+### Checklist sebelum deploy
+
+- [ ] Semua perubahan sudah di-commit dan di-push. File rahasia (`.env`, `.env.docker`)
+      **jangan pernah** ikut ke Git (sudah diabaikan lewat `.gitignore`).
+- [ ] `php artisan test` hijau di komputermu.
+- [ ] Punya **nama domain** (atau subdomain) yang diarahkan ke server. Buat HTTPS dan
+      login yang aman, domain itu wajib.
+- [ ] Siapkan **password kuat** buat database dan akun admin (jangan pakai `secret` atau
+      `password`).
+- [ ] (Opsional) key Gemini buat Interpretasi AI, dan key Turnstile buat captcha daftar.
+- [ ] (Opsional tapi disarankan) akun email SMTP buat fitur lupa password, misalnya
+      Brevo, Mailgun, atau SMTP bawaan hosting.
+
+### Konfigurasi environment production
+
+Nilai di bawah ini diisi di file environment server (`.env.docker` buat Docker, `.env`
+buat shared hosting). **Jangan pernah** menyalin file environment lokalmu ke server.
+
+| Variabel | Nilai production | Keterangan |
+|---|---|---|
+| `APP_ENV` | `production` | |
+| `APP_DEBUG` | `false` | `true` bocorin detail error dan data sensitif ke pengunjung |
+| `APP_KEY` | hasil `php artisan key:generate --show` | Bikin baru buat server, jangan pakai punya lokal |
+| `APP_URL` | `https://domainmu.com` | Pakai `https` |
+| `DB_*` | host, nama, user, password database | Password kuat |
+| `SESSION_DRIVER` | `database` | |
+| `QUEUE_CONNECTION` | `database` (Docker) atau `sync` (shared hosting) | |
+| `TRUSTED_PROXIES` | `*` | Cuma kalau ada reverse proxy HTTPS di depan aplikasi (opsi A) |
+| `MAIL_MAILER` dan `MAIL_*` | `smtp` + data SMTP-mu | `log` berarti email **tidak terkirim** |
+| `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | key asli dari Cloudflare | Jangan pakai test key di production |
+| `GEMINI_API_KEY` | key dari aistudio.google.com | Kosong = tombol Interpretasi AI tidak muncul |
+| `SEED_DEMO_DATA` | `false` | Lihat peringatan di bawah |
+
+> **Peringatan akun contoh.** Seeder (`php artisan db:seed`) bikin `admin@example.com`
+> dan `test@example.com` dengan password `password`. Itu **publik dan gampang ditebak**.
+> Di production seeder ini dilewati otomatis. Bikin admin asli lewat
+> `php artisan app:create-admin` (ada di langkah di bawah).
+
+Catatan lupa password: email verifikasi daftar belum diwajibkan aplikasi ini (user baru
+langsung bisa login), jadi email SMTP terutama dibutuhkan buat **reset password**.
+
+### Opsi A: VPS + Docker
+
+Kita pakai satu VPS Linux (contoh: Ubuntu 24.04), Docker buat jalanin aplikasi, dan
+**Caddy** sebagai reverse proxy yang otomatis mengurus sertifikat HTTPS gratis.
+
+> Setup Docker di repo ini belum pernah saya jalankan sampai tuntas, jadi anggap
+> langkah pertama (`docker compose build`) sebagai tes. Kalau ada error, kirim pesannya
+> ke saya.
+
+**1. Siapkan server**
+
+1. Sewa VPS (Hetzner, DigitalOcean, Vultr, atau penyedia lokal), pilih Ubuntu 24.04
+   dengan RAM minimal 1 GB (2 GB lebih nyaman buat proses build).
+2. Arahkan domain ke VPS: di pengaturan DNS, buat **A record** `domainmu.com` ke IP
+   server. Tunggu beberapa menit sampai aktif.
+3. Login lewat SSH, lalu amankan dasar-dasarnya:
+   ```bash
+   ssh root@IP_SERVER
+   apt update && apt upgrade -y
+   ufw allow OpenSSH
+   ufw allow 80
+   ufw allow 443
+   ufw enable
+   ```
+   Cuma port SSH, 80, dan 443 yang dibuka. Port database (3306) dan port aplikasi
+   (8080) tidak dibuka ke internet.
+4. Pasang Docker (cara resmi, lihat [docs.docker.com/engine/install](https://docs.docker.com/engine/install/ubuntu/)):
+   ```bash
+   curl -fsSL https://get.docker.com | sh
+   ```
+
+**2. Ambil kode dan atur environment**
+
+```bash
+git clone https://github.com/USERNAME/NAMA-REPO.git /opt/quiz-app
+cd /opt/quiz-app
+cp docker/env.example .env.docker
+nano .env.docker
+```
+
+Di `.env.docker` isi minimal:
+- `APP_URL=https://domainmu.com`
+- Ganti **semua** `secret` (`DB_PASSWORD`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`) jadi
+  password kuat. Nilai `DB_*` dan `MYSQL_*` harus kembar.
+- `MAIL_*`, `TURNSTILE_*`, `GEMINI_API_KEY` kalau dipakai.
+- `TRUSTED_PROXIES=*` (sudah bawaan) dan `SEED_DEMO_DATA=false`.
+
+**3. Build, generate key, nyalakan**
+
+```bash
+docker compose build
+docker compose run --rm app php artisan key:generate --show
+```
+
+Tempel hasil `base64:...` ke `APP_KEY=` di `.env.docker`, lalu:
+
+```bash
+docker compose up -d
+docker compose ps
+```
+
+Semua service (`app`, `scheduler`, `queue`, `mysql`) harus berstatus *running*.
+Migration jalan otomatis saat `app` start. Cek lognya kalau ragu:
+`docker compose logs -f app`.
+
+**4. Pasang Caddy (HTTPS otomatis)**
+
+Ikuti [panduan install Caddy](https://caddyserver.com/docs/install#debian-ubuntu-raspbian),
+lalu isi `/etc/caddy/Caddyfile`:
+
+```
+domainmu.com {
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+```bash
+systemctl reload caddy
+```
+
+Caddy otomatis minta dan memperbarui sertifikat HTTPS, selama DNS domain sudah mengarah
+ke server dan port 80/443 terbuka.
+
+**5. Bikin akun admin**
+
+```bash
+docker compose exec app php artisan app:create-admin
+```
+
+Isi nama, email, dan password (minimal 8 karakter, disarankan jauh lebih panjang). Kalau
+emailnya sudah terdaftar sebagai user biasa, user itu dinaikkan jadi admin tanpa mengubah
+passwordnya.
+
+**6. Cek hasilnya**
+
+Buka `https://domainmu.com`, lalu:
+- [ ] Halaman awal terbuka dengan gembok HTTPS, tanpa peringatan *mixed content*.
+- [ ] Login pakai akun admin berhasil.
+- [ ] Daftar akun peserta baru berhasil (captcha tampil kalau Turnstile diisi).
+- [ ] Admin bisa bikin quiz dan tes kepribadian, peserta bisa mengerjakannya.
+- [ ] Tombol Interpretasi AI muncul di hasil tes (kalau `GEMINI_API_KEY` diisi).
+- [ ] Reset password mengirim email sungguhan (kalau SMTP diisi).
+
+**Perawatan harian**
+
+| Tugas | Perintah |
+|---|---|
+| Update ke versi terbaru | `git pull && docker compose build && docker compose up -d` |
+| Lihat log | `docker compose logs -f app` |
+| Restart (setelah ubah `.env.docker`) | `docker compose up -d --force-recreate` |
+| Backup database | `docker compose exec mysql sh -c 'mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' > backup-$(date +%F).sql` |
+| Matikan semua (data **aman**) | `docker compose down` |
+
+> **Awas:** `docker compose down -v` ikut **menghapus volume database**, jadi semua data
+> hilang. Jangan pakai `-v` kecuali memang mau mulai dari nol. Biasakan backup berkala
+> dan simpan filenya di luar server.
+
+### Opsi B: Shared hosting (cPanel)
+
+Syarat hosting: **PHP 8.2 atau lebih baru**, MySQL, akses **SSH** (atau Terminal di
+cPanel), dan kemampuan mengubah *document root*. Ekstensi PHP yang dibutuhkan: `pdo_mysql`,
+`mbstring`, `bcmath`, `intl`, `zip`, `gd`, `xml`, `fileinfo`. Cek di menu *Select PHP
+Version* / *PHP Extensions*.
+
+Karena shared hosting biasanya tidak punya Node.js, **build asset frontend dilakukan di
+komputermu**, lalu hasilnya ikut di-upload.
+
+1. **Build di lokal:**
+   ```bash
+   composer install --no-dev --optimize-autoloader
+   npm ci && npm run build
+   ```
+2. **Buat database** di cPanel (*MySQL Databases*): satu database, satu user, hubungkan
+   keduanya dengan semua hak akses. Catat nama, user, dan password-nya.
+3. **Upload project** (zip lalu extract lewat File Manager, atau `git clone` kalau ada
+   SSH) ke folder **di luar** `public_html`, misalnya `/home/USER/quiz-app`. Pastikan
+   folder `vendor/` dan `public/build/` ikut terupload.
+4. **Arahkan domain ke folder `public`**: di cPanel menu *Domains*, set *Document Root*
+   domain ke `quiz-app/public`. Jangan pernah menaruh seluruh project di `public_html`
+   karena file environment dan kodenya bisa terunduh orang.
+5. **Buat file `.env`** di `quiz-app/` dengan nilai dari tabel
+   [konfigurasi production](#konfigurasi-environment-production). Khusus shared hosting:
+   `QUEUE_CONNECTION=sync` dan `TRUSTED_PROXIES` dikosongkan. Generate `APP_KEY`-nya di
+   komputer lokal (`php artisan key:generate --show`) lalu tempel.
+6. **Jalankan lewat SSH/Terminal:**
+   ```bash
+   cd ~/quiz-app
+   php artisan migrate --force
+   php artisan app:create-admin
+   php artisan config:cache
+   php artisan view:cache
+   ```
+   Kalau `php` di server bukan versi 8.2+, pakai path versinya, misalnya
+   `/opt/cpanel/ea-php82/root/usr/bin/php`.
+7. **Pasang cron** (cPanel menu *Cron Jobs*, jalan tiap menit) buat scheduler yang
+   menutup attempt quiz kedaluwarsa:
+   ```
+   * * * * * cd /home/USER/quiz-app && php artisan schedule:run >> /dev/null 2>&1
+   ```
+8. Cek permission: folder `storage/` dan `bootstrap/cache/` harus bisa ditulis
+   (`chmod -R 775`). Lalu ikuti [checklist cek hasil](#opsi-a-vps--docker) di atas.
+
+Update di shared hosting: build ulang di lokal, upload perubahan, lalu jalankan
+`php artisan migrate --force && php artisan config:cache && php artisan view:cache`.
+
+### Troubleshooting
+
+| Gejala | Kemungkinan penyebab dan solusi |
+|---|---|
+| Halaman putih / error 500 | Cek `storage/logs/laravel.log` (atau `docker compose logs app`). Sering karena `APP_KEY` kosong atau folder `storage` tidak bisa ditulis. |
+| Tampilan berantakan, tanpa CSS | `public/build/` tidak ikut terupload atau `APP_URL` salah. Pada Docker, build asset sudah otomatis di dalam image. |
+| Peringatan *mixed content* / link `http://` | Di belakang proxy HTTPS, isi `TRUSTED_PROXIES=*` lalu restart container. |
+| Berubah `.env` tapi tidak berpengaruh | Config di-cache. Jalankan `php artisan config:clear` (shared hosting) atau restart container (Docker). |
+| Tombol Interpretasi AI tidak muncul | `GEMINI_API_KEY` kosong. Kalau muncul tapi error, lihat log: biasanya model sedang ramai (coba lagi) atau kuota gratis habis. |
+| Email reset password tidak sampai | `MAIL_MAILER` masih `log`, atau data SMTP salah. Email `log` hanya tertulis di `storage/logs`. |
+| Attempt quiz berbatas waktu tidak ditutup otomatis | Scheduler belum jalan (cron belum dipasang, atau container `scheduler` mati). |
+| `Access denied` ke database saat Docker | `DB_*` dan `MYSQL_*` di `.env.docker` tidak sama. Kalau sudah terlanjur dijalankan, password lama tersimpan di volume, jadi hapus volume (`docker compose down -v`, data hilang) atau ubah password lewat MySQL. |
 
 ## Menjalankan Test
 
