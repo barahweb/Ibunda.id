@@ -45,8 +45,8 @@ Livewire (Volt), dan Flux UI. Ada dua peran: **Admin** yang bikin & kelola quiz,
   per user. Konten OEJTS berlisensi CC BY-NC-SA 4.0 (non-komersial),
   kredit ke [Open Psychometrics](https://openpsychometrics.org/tests/OEJTS/) tampil di
   halaman tes.
-- Docker support — `Dockerfile` + `docker-compose.yml`, lihat bagian
-  [Docker](#docker) di bawah.
+- Docker support (opsional, buat VPS, **belum pernah diuji**) — `Dockerfile` +
+  `docker-compose.yml`, lihat bagian [Docker](#docker) di bawah.
 
 ## Tech Stack
 
@@ -133,6 +133,11 @@ TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
 
 ## Docker
 
+> **Status:** opsional dan **belum pernah dijalankan sampai tuntas**. Situs yang live
+> sekarang **tidak** memakai Docker, tapi shared hosting cPanel (lihat
+> [Opsi B](#opsi-b-shared-hosting-cpanel)). Docker cuma cocok buat VPS atau dicoba di
+> komputer sendiri, soalnya shared hosting tidak bisa menjalankan container.
+
 Alternatif dari instalasi manual di atas. Satu image dipakai buat 3 peran (`app` yang
 serve web, `scheduler`, `queue`), plus container `mysql` terpisah.
 
@@ -169,17 +174,20 @@ Catatan:
   beda soalnya `DB_HOST` di Docker itu `mysql` (nama service), bukan `127.0.0.1`.
 - Setup ini nggabungin nginx + PHP-FPM dalam 1 container lewat `supervisord`, sengaja
   disederhanain (bukan setup production yang di-hardening penuh) biar gampang dicoba.
-- **Saya belum bisa nyoba `docker compose up` beneran** di environment kerja saya (gak
-  ada Docker terinstall di situ) — udah saya cek manual tiap file-nya (Dockerfile,
-  nginx.conf, entrypoint.sh) sebaik mungkin, tapi tolong dicoba sendiri dan kasih tau
-  kalau ada yang error.
+- **`docker compose up` belum pernah dijalankan** (Docker belum terpasang di komputer
+  pengembang). Tiap file (Dockerfile, nginx.conf, entrypoint.sh) baru diperiksa dengan
+  dibaca, jadi anggap `docker compose build` pertama sebagai tes. Kalau ada error,
+  laporkan lewat issue.
 
 ## Deploy ke Production
 
 Panduan ini ngejelasin dua cara naruh aplikasi ini di internet tanpa Laravel Cloud.
-Pilih satu:
+Pilih satu.
 
-| | **A. VPS + Docker** (disarankan) | **B. Shared hosting (cPanel)** |
+> **Yang dipakai situs live sekarang: Opsi B (shared hosting cPanel).** Opsi A adalah
+> jalur buat VPS dan **belum diuji**.
+
+| | **A. VPS + Docker** (belum diuji) | **B. Shared hosting (cPanel)** (dipakai situs live) |
 |---|---|---|
 | Biaya kasar | VPS kecil, sekitar $4-6/bulan | Paket hosting biasa, sering lebih murah |
 | Cocok kalau | Mau semua fitur jalan penuh | Cuma punya hosting biasa |
@@ -235,9 +243,9 @@ langsung bisa login), jadi email SMTP terutama dibutuhkan buat **reset password*
 Kita pakai satu VPS Linux (contoh: Ubuntu 24.04), Docker buat jalanin aplikasi, dan
 **Caddy** sebagai reverse proxy yang otomatis mengurus sertifikat HTTPS gratis.
 
-> Setup Docker di repo ini belum pernah saya jalankan sampai tuntas, jadi anggap
-> langkah pertama (`docker compose build`) sebagai tes. Kalau ada error, kirim pesannya
-> ke saya.
+> Setup Docker di repo ini **belum pernah dijalankan sampai tuntas**, jadi anggap
+> langkah pertama (`docker compose build`) sebagai tes. Kalau ada error, laporkan
+> lewat issue.
 
 **1. Siapkan server**
 
@@ -356,6 +364,17 @@ Version* / *PHP Extensions*.
 
 Karena shared hosting biasanya tidak punya Node.js, **build asset frontend dilakukan di
 komputermu**, lalu hasilnya ikut di-upload.
+
+> **Kalau paket hosting tidak punya Terminal/SSH** (seperti situs live ini): buat
+> `vendor/` dan `public/build/` di komputer sendiri lalu upload zip-nya lewat File
+> Manager. Struktur tabel diimpor lewat phpMyAdmin dari file SQL hasil
+> `migrate` di komputer sendiri. Akun admin dibuat dengan daftar lewat aplikasi, lalu
+> kolom `role` diubah jadi `admin` lewat phpMyAdmin. `php artisan ...` dan cron
+> dilewati (scheduler cuma buat menutup attempt quiz kedaluwarsa, aplikasi tetap
+> jalan). Kalau domain utama akun terkunci di `public_html`, taruh isi folder `public`
+> di `public_html`, simpan sisanya di folder terpisah (misal `quiz-app`), lalu ubah
+> jalur di `public_html/index.php` ke `../quiz-app/...` dan tambahkan
+> `$app->usePublicPath(__DIR__);`. Jangan menaruh seluruh proyek di `public_html`.
 
 1. **Build di lokal:**
    ```bash
